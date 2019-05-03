@@ -12,6 +12,20 @@
  * @package EDD CesiumJS Customize
  * @category Core
  * @author World Web
+ *
+ * CHANGELOG
+ * 1.0.0
+ * - Initial Release
+ *
+ * 1.0.1
+ * - Added further functions and fixes
+ *
+ * 1.0.2
+ * - Moved all settings to one common page Settings>Contrukted
+ *
+ *
+ *
+ *
  */
 
 // Exit if accessed directly
