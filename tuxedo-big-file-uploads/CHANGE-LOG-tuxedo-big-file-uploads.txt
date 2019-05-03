@@ -1,0 +1,28 @@
+Plugin Name: Tuxedo Big File Uploads
+
+-------------------------------------
+
+Function: filter_upload_size_limit
+Line: 152
+
+New Code:
+$tuxbfu_max_upload_size = intval( apply_filters( 'tuxbfu_max_upload_size', get_option( 'tuxbfu_max_upload_size', 0 ) ) ) * 1048576;
+
+
+Old Code:
+$tuxbfu_max_upload_size = intval( get_option( 'tuxbfu_max_upload_size', 0 ) ) * 1048576;
+-------------------------------------
+
+
+Function: ajax_chunk_receiver
+Line: 315
+New Code:
+
+$tuxbfu_max_upload_size = intval( apply_filters( 'tuxbfu_max_upload_size', get_option( 'tuxbfu_max_upload_size', 0 ) ) * 1048576 );
+
+Old Code:
+
+$tuxbfu_max_upload_size = intval( get_option( 'tuxbfu_max_upload_size', 0 ) * 1048576 );
+
+
+-------------------------------------
