@@ -284,6 +284,121 @@ class EDD_CJS_Public {
         return $output;
     }
 
+    // fes frontemd submission: Rename uploaded file, rename download slug
+	public function edd_cjs_fes_pre_files_save( $files = array(), $post_id = 0 ){
+
+		$new = EDD()->session->get( 'fes_is_new' );
+
+		$post_slug = md5( date( 'Y-m-d H:i:s', current_time( 'timestamp', 0 ) ) );
+		
+		if ( $new ) {
+
+			// rename download slug
+        	wp_update_post(
+	            array (
+	                'ID'        => $post_id,
+	                'post_name' => $post_slug
+	            )
+	        );
+
+        	update_post_meta( $post_id, 'edd_cjs_file_prefix', $post_slug );	
+        }
+
+		if ( ! function_exists( 'fes_get_attachment_id_from_url' ) ) {
+			return $files;
+		}
+
+		if ( ! empty( $files ) && is_array( $files ) ) {
+			foreach ( $files as $key => $file ) {
+
+				$file_prefix = get_post_meta( $post_id, 'edd_cjs_file_prefix', true );
+
+				$attachment_id = fes_get_attachment_id_from_url( $file['file'], get_current_user_id() );
+				
+				if ( ! $attachment_id ) {
+					continue;
+				}
+
+				$new_data = array();
+				$without_extension = pathinfo($file['name'], PATHINFO_FILENAME);
+				$new_filename = $file_prefix.$file['name'];
+
+				// Rename uploaded file
+				$new_data[] = $this->rename_image_process($attachment_id, $file_prefix.$without_extension);
+
+				$files[$key]['name'] = $new_filename;
+				$files[$key]['file'] = str_replace($file['name'], $new_filename, $file['file']);
+			}
+		}
+
+        return $files;
+    }
+
+	public function rename_image_process( $attachment_id, $new_filename ){
+
+		include_once( ABSPATH . 'wp-admin/includes/image.php' );
+
+		// Variables
+		$post = get_post($attachment_id);
+		$file_parts = $this->get_file_parts($attachment_id);
+
+		$file_abs_path = get_attached_file($post->ID);
+		$file_abs_dir = dirname( $file_abs_path );
+		$new_file_abs_path = preg_replace('~[^/]+$~', $new_filename . '.' . $file_parts['extension'], $file_abs_path);
+
+		$file_rel_path = get_post_meta($post->ID, '_wp_attached_file', 1);
+		$new_file_rel_path = preg_replace('~[^/]+$~', $new_filename . '.' . $file_parts['extension'], $file_rel_path);
+
+		$uploads_path = wp_upload_dir();
+		$uploads_path = $uploads_path['basedir'];
+
+		$searches = $this->get_attachment_urls($attachment_id);
+
+		if (!is_writable($file_abs_dir)) return __('The media containing directory is not writable!');
+
+		// Change the attachment post
+		$post_changes['ID'] = $post->ID;
+		$post_changes['guid'] = preg_replace('~[^/]+$~', $new_filename . '.' . $file_parts['extension'], $post->guid);
+		$post_changes['post_title'] = $new_filename;
+		$post_changes['post_name'] = wp_unique_post_slug($new_filename, $post->ID, $post->post_status, $post->post_type, $post->post_parent);
+		wp_update_post($post_changes);
+
+		// Change attachment post metas & rename files
+		foreach (get_intermediate_image_sizes() as $size) {
+			$size_data = image_get_intermediate_size($attachment_id, $size);
+			@unlink( $uploads_path . DIRECTORY_SEPARATOR . $size_data['path'] );
+		}
+
+		if ( !@rename($file_abs_path, $new_file_abs_path) ) return __('File renaming error!');
+
+		update_post_meta($attachment_id, '_wp_attached_file', $new_file_rel_path);
+		wp_update_attachment_metadata($attachment_id, wp_generate_attachment_metadata($attachment_id, $new_file_abs_path));
+
+		// Replace the old with the new media link in the content of all posts and metas
+		$replaces = $this->get_attachment_urls($attachment_id);
+		return $replaces;
+	}
+
+	function get_file_parts($post_id) {
+		preg_match('~([^/]+)\.([^\.]+)$~', get_attached_file($post_id), $file_parts); // extract current filename and extension
+		return array(
+			'filename' => $file_parts[1],
+			'extension' => $file_parts[2]
+		);
+	}
+
+	function get_attachment_urls($attachment_id) {
+		$urls = array( wp_get_attachment_url($attachment_id) );
+		if ( wp_attachment_is_image($attachment_id) ) {
+			foreach (get_intermediate_image_sizes() as $size) {
+				$image = wp_get_attachment_image_src($attachment_id, $size);
+				$urls[] = $image[0];
+			}
+		}
+
+		return array_unique($urls);
+	}
+
     /*fes frontemd submission form in if sellable select than multi price require otherwise hide */	
 	public function edd_cjs_fes_frontend_submission_error_check( $output, $save_id, $values, $user_id ){
 
@@ -364,6 +479,9 @@ class EDD_CJS_Public {
 		add_filter( 'fes_render_submission_form_frontend_fields', array( $this, 'edd_cjs_fes_render_submission_form_frontend_fields' ), 10, 4 );
 
 		add_filter( 'fes_after_submission_form_save_frontend', array( $this, 'fes_cjs_fes_save_submission_form_after_frontend' ), 15, 4 );
+
+		// Rename uploaded file, rename download slug and save meta before s3 upload
+		add_filter( 'fes_pre_files_save', array( $this, 'edd_cjs_fes_pre_files_save' ), 9, 2 );
 
 		// Check error for preview video with membership level
         add_filter( 'fes_before_submission_form_error_check_frontend', array( $this, 'edd_cjs_fes_frontend_submission_error_check'), 16, 4);
