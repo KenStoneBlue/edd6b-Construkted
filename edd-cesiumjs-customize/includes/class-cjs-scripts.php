@@ -55,11 +55,11 @@ class EDD_CJS_Scripts {
 				}*/
 
     		// add css for check code in public
-    		wp_enqueue_style( 'edd-cjs-cesium-widgets-style',  'https://cesiumjs.org/releases/1.7/Build/Cesium/Widgets/widgets.css', array(), EDD_CJS_LIB_VER );
+    		wp_enqueue_style( 'edd-cjs-cesium-widgets-style',  'https://cesiumjs.org/releases/1.57/Build/Cesium/Widgets/widgets.css', array(), EDD_CJS_LIB_VER );
     		// wp_register_style( 'edd-cjs-public-style', EDD_CJS_INC_URL . '/css/edd-cjs-public.css', array(), EDD_CJS_LIB_VER );
     		// wp_enqueue_style( 'edd-cjs-public-style' );
 
-        wp_enqueue_script('edd-cjs-cesium-script', 'https://cesiumjs.org/releases/1.7/Build/Cesium/Cesium.js', array('jquery'), EDD_CJS_LIB_VER, true);
+        wp_enqueue_script('edd-cjs-cesium-script', 'https://cesiumjs.org/releases/1.57/Build/Cesium/Cesium.js', array('jquery'), EDD_CJS_LIB_VER, true);
         
 				wp_register_script('edd-cjs-public-script', EDD_CJS_INC_URL . '/js/edd-cjs-public-script.js', array('jquery','edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
         wp_enqueue_script('edd-cjs-public-script');
