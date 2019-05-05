@@ -13,11 +13,15 @@ Version: 1.0
 /*************** ADD YOUR CUSTOM CSS IN THIS AREA ***************/
 /****************************************************************/
 
-
-
-
-
-
+#toolbar {
+    background: rgba(0, 0, 0, 0);
+    margin: 0px;
+    position: absolute;
+    padding: 0px;
+    border-radius: 0px;
+    top: 5px;
+    left: 5px;
+}
 
 
 
