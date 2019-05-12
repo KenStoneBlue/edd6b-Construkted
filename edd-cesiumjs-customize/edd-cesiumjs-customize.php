@@ -3,7 +3,7 @@
  * Plugin Name: EDD CesiumJS Customize
  * Plugin URI: http://www.worldwebtechnology.com/
  * Description: EDD CesiumJS Customize
- * Version: 1.0.0
+ * Version: 1.0.2
  * Author: World Web
  * Author URI: http://www.worldwebtechnology.com/
  * Text Domain: edd_cjs
