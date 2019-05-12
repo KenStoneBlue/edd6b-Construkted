@@ -1,10 +1,10 @@
 <?php
 /**
- * Plugin Name: Tuxedo Big File Uploads
+ * Plugin Name: Tuxedo Big File Uploads Construkted
  * Plugin URI:  https://github.com/andtrev/Tuxedo-Big-File-Uploads
- * Description: Enables large file uploads in the built-in WordPress media uploader.
- * Version:     1.2
- * Author:      Trevor Anderson
+ * Description: Enables large file uploads in the built-in WordPress media uploader and modified for Construkted
+ * Version:     1.2.1
+ * Author:      Trevor Anderson + Construkted
  * Author URI:  https://github.com/andtrev
  * License:     GPLv2 or later
  * Domain Path: /languages
@@ -25,7 +25,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @package TuxedoBigFileUploads
- * @version 1.2.0
+ * @version 1.2.1
  */
 
 /**
