@@ -570,8 +570,8 @@ var theApp = (function () {
             geocoder: false,
             sceneModePicker: false,
             timeline: false,
-            navigationHelpButton: false,
-            fullscreenButton: false
+            //navigationHelpButton: false,
+            //fullscreenButton: false
         });
 
         // hide Cesium credit display
