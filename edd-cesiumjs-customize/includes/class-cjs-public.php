@@ -217,6 +217,10 @@ class EDD_CJS_Public {
 		if( !empty($fields['download_asset_url']) ){
 			unset($fields['download_asset_url']);
 		}
+		if( !empty($fields['default_camera_position_direction']) ){
+			unset($fields['default_camera_position_direction']);
+		}
+		
 
 		return $fields;
 	}
