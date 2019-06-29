@@ -1,17 +1,17 @@
 <?php
 /**
  * Plugin Name: EDD CesiumJS Customize
- * Plugin URI: http://www.worldwebtechnology.com/
+ * Plugin URI: http://www.construkted.com/
  * Description: EDD CesiumJS Customize
- * Version: 1.0.3
- * Author: World Web
- * Author URI: http://www.worldwebtechnology.com/
+ * Version: 1.0.4
+ * Author: Construkted Team
+ * Author URI: http://www.construkted.com/
  * Text Domain: edd_cjs
  * Domain Path: languages
  *
  * @package EDD CesiumJS Customize
  * @category Core
- * @author World Web
+ * @author Construkted Team
  *
  * CHANGELOG
  * 1.0.0
@@ -27,7 +27,10 @@
  * - Added extra FES hidden field:
  *      field : default_camera_position_direction
  *
- *
+ *1.0.4
+ * - Added random characters as item slug. (length of 10)
+ * - Added a hyphen between slug and file name when file gets renamed before sending to S3
+ * 
  */
 
 // Exit if accessed directly
