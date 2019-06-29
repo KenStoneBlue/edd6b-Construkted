@@ -316,6 +316,8 @@ class EDD_CJS_Public {
 			foreach ( $files as $key => $file ) {
 
 				$file_prefix = get_post_meta( $post_id, 'edd_cjs_file_prefix', true );
+				// Add hyphen to the end of $file_prefix string
+				$file_prefix .= "-";
 
 				$attachment_id = fes_get_attachment_id_from_url( $file['file'], get_current_user_id() );
 				
