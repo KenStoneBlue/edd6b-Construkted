@@ -163,10 +163,12 @@ EDD_CJS.CameraController = (function () {
             case 'E'.charCodeAt(0):
                 return 'moveDown';
             case 'D'.charCodeAt(0):
-                this._headingDirection = HEADING_DIRECTION_RIGHT;
+                // this._headingDirection = HEADING_DIRECTION_RIGHT;  //Rotate camera to the right with key press "D"
+                this._direction = DIRECTION_RIGHT;  // Move camera right with key press "D"
                 return;
             case 'A'.charCodeAt(0):
-                this._headingDirection = HEADING_DIRECTION_LEFT;
+                // this._headingDirection = HEADING_DIRECTION_LEFT;  //Rotate camera to the left with key press "A"
+                this._direction = DIRECTION_LEFT;  // Move camera left with key press "A"
                 return;
             case 90: // z
                 if(this._main3dTileset)
@@ -525,7 +527,8 @@ EDD_CJS.CameraController = (function () {
 
         $('#' + this._exitFPVModeButtonId).on('click', function(event){
             self._disable();
-            self._camera.flyToBoundingSphere(self._main3dTileset.boundingSphere);
+            //self._camera.flyToBoundingSphere(self._main3dTileset.boundingSphere);
+            self.setDefaultView();
             $('#' + self._exitFPVModeButtonId).hide();
         });
     };
@@ -545,19 +548,78 @@ EDD_CJS.CameraController = (function () {
         scene.screenSpaceCameraController.enableTilt = false;
         scene.screenSpaceCameraController.enableLook = false;
     };
+    
+    CameraController.prototype.getViewData = function () {
+        var camera = this._cesiumViewer.camera;
+        
+        var cartographic = this._cesiumViewer.scene.globe.ellipsoid.cartesianToCartographic(camera.position);
+        
+        var viewData = {};
+        
+        viewData.longitude = cartographic.longitude;
+        viewData.latitude = cartographic.latitude;
+        viewData.height = cartographic.height;
+        
+        viewData.heading = camera.heading;
+        viewData.pitch = camera.pitch;
+        viewData.roll = camera.roll;
+        
+        return JSON.stringify(viewData);
+    };
+    
+    CameraController.prototype.setDefaultView = function() {
+        var viewData = EDD_CJS_PUBLIC_AJAX.view_data;
+           
+        if(viewData != "") {
+            viewData = JSON.parse(viewData);                
+            
+            var cartographic = new Cesium.Cartographic(viewData.longitude, viewData.latitude, viewData.height);
 
+            this._cesiumViewer.camera.flyTo({
+                destination : this._cesiumViewer.scene.globe.ellipsoid.cartographicToCartesian(cartographic),
+                orientation : {
+                    heading : viewData.heading ,
+                    pitch :  viewData.pitch,
+                    roll : viewData.roll
+                }
+            });
+        }
+        else {
+            this._camera.flyToBoundingSphere(this._main3dTileset.boundingSphere);
+            // viewer.zoomTo(this._main3dTileset)
+            // .otherwise(function (error) {
+            //     console.log(error);
+            // });    
+        }
+    }
+    
     return CameraController;
 
 })();
 
+var viewer = null;
+var cameraController = null;
+ 
 var theApp = (function () {
-    var viewer = null;
-    var cameraController = null;
+  
+   
     var tilesets = null;
 
     function start() {
         $('#exitFPVModeButton').hide();
-
+        
+        $('#capture_thumbnail').click(function () {
+           captureThumbnail();
+        });
+        
+        $('#save_current_view').click(function () {
+           saveCurrentView();
+        });
+        
+        $('#reset_camera_view').click(function () {
+          resetCameraView(); 
+        });
+        
         create3DMap();
     }
 
@@ -582,7 +644,10 @@ var theApp = (function () {
 
             tilesets = viewer.scene.primitives.add(
                 new Cesium.Cesium3DTileset({
-                    url: cesiumTilesetURL
+                    url: cesiumTilesetURL,
+                    immediatelyLoadDesiredLevelOfDetail : true,
+                    skipLevelOfDetail : true,
+                    loadSiblings : true,
                 })
             );
         } else if( EDD_CJS_PUBLIC_AJAX.download_asset_id.length ){
@@ -591,6 +656,9 @@ var theApp = (function () {
             tilesets = viewer.scene.primitives.add(
                 new Cesium.Cesium3DTileset({
                     url: Cesium.IonResource.fromAssetId(EDD_CJS_PUBLIC_AJAX.download_asset_id),
+                    immediatelyLoadDesiredLevelOfDetail : true,
+                    skipLevelOfDetail : true,
+                    loadSiblings : true,
 
                 })
             );
@@ -614,22 +682,82 @@ var theApp = (function () {
             cameraController = new EDD_CJS.CameraController(options);
 
             //required since the models may not be geographically referenced.
-            if(tilesets.asset.extras.ion.georeferenced != true)
-                tilesets.modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(Cesium.Cartesian3.fromDegrees(0, 0));
-
-            viewer.zoomTo(tilesets)
-                .otherwise(function (error) {
-                    console.log(error);
-                });
+            
+            if(tilesets.asset.extras != null)
+                if(tilesets.asset.extras.ion.georeferenced != true)
+                    tilesets.modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(Cesium.Cartesian3.fromDegrees(0, 0));
+            
+            cameraController.setDefaultView();
+            
+        });
+    }
+    
+    function captureThumbnail() {
+        viewer.render();
+        
+        var mediumQuality  = viewer.canvas.toDataURL('image/jpeg', 0.5);
+        
+        $.ajax({
+    		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
+    		type : 'post',
+    		data : {
+    			action : 'post_set_thumbnail',
+    			post_id : EDD_CJS_PUBLIC_AJAX.post_id,
+    			capturedJpegImage: mediumQuality
+    		},
+    		success : function( response ) {
+    			alert(response);
+    		},
+    		error: function() {
+    		    alert("error");
+    		}
+	    });
+    }
+    
+    function saveCurrentView() {
+        $.ajax({
+    		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
+    		type : 'post',
+    		data : {
+    			action : 'post_set_current_view',
+    			post_id : EDD_CJS_PUBLIC_AJAX.post_id,
+    			view_data: cameraController.getViewData()
+    		},
+    		success : function( response ) {
+    			alert(response);
+    		},
+    		error: function(xhr,status,error) {
+    		    alert("error");
+    		}
+        });
+    }
+    
+    function resetCameraView() {
+         $.ajax({
+    		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
+    		type : 'post',
+    		data : {
+    			action : 'post_reset_current_view',
+    			post_id : EDD_CJS_PUBLIC_AJAX.post_id,
+    		},
+    		success : function( response ) {
+    			alert(response);
+    		},
+    		error: function(xhr,status,error) {
+    		    alert("error");
+    		}
         });
     }
 
     return {
+        viewer: viewer,
         cameraController: cameraController,
         start: start
     }
 })();
 
 jQuery(document).ready(function(){
+    console.log(EDD_CJS_PUBLIC_AJAX);
+    
     theApp.start();
 });

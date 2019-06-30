@@ -292,8 +292,16 @@ class EDD_CJS_Public {
 	public function edd_cjs_fes_pre_files_save( $files = array(), $post_id = 0 ){
 
 		$new = EDD()->session->get( 'fes_is_new' );
+		
+		$slug_length = 10;
+		$characters = '0123456789abcdefghijklmnopqrstuvwxyz';
+		$charactersLength = strlen($characters);
+		$post_slug = '';
+		for ($i = 0; $i < $slug_length; $i++) {
+        	$post_slug .= $characters[rand(0, $charactersLength - 1)];
+		}
 
-		$post_slug = md5( date( 'Y-m-d H:i:s', current_time( 'timestamp', 0 ) ) );
+		//$post_slug = md5( date( 'Y-m-d H:i:s', current_time( 'timestamp', 0 ) ) );
 		
 		if ( $new ) {
 
