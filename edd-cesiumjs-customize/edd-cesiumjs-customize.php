@@ -26,10 +26,13 @@
  *1.0.3
  * - Added extra FES hidden field:
  *      field : default_camera_position_direction
+ *      This field stores the camera position and view direction, and it becomes the default position and direction when a model is loaded
  *
  *1.0.4
  * - Added random characters as item slug. (length of 10)
  * - Added a hyphen between slug and file name when file gets renamed before sending to S3
+ * - Added load speed optimizations as suggested by Omar
+ * - Modified keyboard key assignments, so "A" and "D" move the camera rather then rotate it.
  * 
  */
 
@@ -84,7 +87,6 @@ load_plugin_textdomain( 'edd_cjs', false, dirname( plugin_basename( __FILE__ ) )
 register_activation_hook( __FILE__, 'edd_cjs_install' );
 
 function edd_cjs_install() {
-
 	//Setup Cron Job
 	$utc_timestamp = time();
 	/*if( ! wp_next_scheduled ( 'edd_cjs_importing_scheduled_cron' ) ) {
@@ -115,9 +117,6 @@ global $edd_cjs_model, $edd_cjs_admin, $edd_cjs_public, $edd_cjs_scripts, $edd_c
 // this code for download single page in also like post list not a private Access
 include_once( EDD_CJS_INC_DIR .'/class-cjs-layero-edd-related-download.php' );
 
-
-
-
 // Misc handles all misc functions
 //include_once( EDD_CJS_INC_DIR .'/wcesl-misc-functions.php' );
 
@@ -140,17 +139,11 @@ include_once( EDD_CJS_INC_DIR .'/class-cjs-public.php' );
 $edd_cjs_public = new EDD_CJS_Public();
 $edd_cjs_public->add_hooks();
 
-
-
-
-
 /**
  * Example Widget Class
  */
 class asset_editor extends WP_Widget {
- 
- 
-    /** constructor -- name this the same as the class above */
+     /** constructor -- name this the same as the class above */
     function asset_editor() {
         parent::WP_Widget(false, $name = 'Asset Editor');	
     }
@@ -164,10 +157,10 @@ class asset_editor extends WP_Widget {
               <?php echo $before_widget; ?>
                   <?php if ( $title )
                         echo $before_title . $title . $after_title; ?>
-							<ul>
-								<li><button type="button"><?php echo 'Capture Thumbnail'; ?></button></li>
-								<li><button type="button"><?php echo 'Save Current View'; ?></button></li>
-								<li><button type="button"><?php echo 'Reset Camera View'; ?></button></li>
+ 							<ul>
+								<li><button type="button" id="capture_thumbnail">Capture Thumbnail</button></li>
+								<li><button type="button" id="save_current_view">Save Current View</button></li>
+								<li><button type="button" id="reset_camera_view">Reset Camera View</button></li>
 							</ul>
               <?php echo $after_widget; ?>
         <?php
@@ -183,7 +176,6 @@ class asset_editor extends WP_Widget {
  
     /** @see WP_Widget::form -- do not rename this */
     function form($instance) {	
- 
         $title 		= esc_attr($instance['title']);
         $message	= esc_attr($instance['message']);
         ?>
@@ -191,13 +183,139 @@ class asset_editor extends WP_Widget {
           <label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label> 
           <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" />
         </p>
-		
         <?php 
     }
- 
- 
 } // end class asset_editor
+
 add_action('widgets_init', create_function('', 'return register_widget("asset_editor");'));
+
+add_action( 'wp_ajax_nopriv_post_set_thumbnail', 'post_set_thumbnail' );
+add_action( 'wp_ajax_post_set_thumbnail', 'post_set_thumbnail' );
+
+function post_set_thumbnail() {
+    $post_id = $_REQUEST['post_id'];
+    $thumbnail_id = get_post_meta( $post_id, '_thumbnail_id', true );
+    
+    // check old thumbnail and delete
+    if($thumbnail_id != "")
+        if( ! wp_delete_attachment( $thumbnail_id, true )) {
+            echo "failed to delete old thumbnail!";
+            return;
+        }
+    
+    // save image
+    
+    $image = $_REQUEST['capturedJpegImage'];
+    $image = str_replace('data:image/jpeg;base64,', '', $image);
+    $image = str_replace(' ', '+', $image);
+    $imageData = base64_decode($image);
+    
+    $thumbnailFileName = 'thumbnail' . time().'.jpg';
+    
+    $wordpress_upload_dir = wp_upload_dir();
+    
+    $new_file_path = $wordpress_upload_dir['path'] . '/' . $thumbnailFileName;
+    
+    file_put_contents($new_file_path, $imageData);
+    
+    // end save image 
+    
+    // insert new attachment
+    
+    $siteurl = get_option('siteurl');
+
+    $artdata = array();
+    
+    $artdata = array(
+        'post_author' => 1, 
+        'post_date' => current_time('mysql'),
+        'post_date_gmt' => current_time('mysql'),
+        'post_title' => $thumbnailFileName, 
+        'post_status' => 'inherit',
+        'comment_status' => 'open',
+        'ping_status' => 'closed',
+        'post_name' => sanitize_title_with_dashes(str_replace("_", "-", $thumbnailFileName)),   
+        'post_modified' => current_time('mysql'),
+        'post_modified_gmt' => current_time('mysql'),
+        'post_parent' => $post_id,
+        'post_type' => 'attachment',
+        'guid' => $siteurl.'/'. $new_file_path,
+        'post_mime_type' => 'image/jpeg',
+        'post_excerpt' => '',
+        'post_content' => ''
+    );
+    
+    //insert the database record
+    $attach_id = wp_insert_attachment( $artdata, $new_file_path, $post_id );
+    
+    if($attach_id == 0) {
+        echo 'failed to insert attach!';
+        return;
+    }
+    
+    //generate metadata and thumbnails
+    if ($attach_data = wp_generate_attachment_metadata( $attach_id, $new_file_path)) {
+        wp_update_attachment_metadata($attach_id, $attach_data);
+    }
+    else {
+
+    }
+
+    $ret = update_post_meta( $post_id, '_thumbnail_id', $attach_id ); 
+    
+    if($ret == true) {
+        echo "successfully update thumbnail";
+    }
+    else {
+        echo "failed to update thumbnail";
+    }
+}
+
+add_action( 'wp_ajax_nopriv_post_set_current_view', 'post_set_current_view' );
+add_action( 'wp_ajax_post_set_current_view', 'post_set_current_view' );
+
+function post_set_current_view() {
+     $post_id = $_REQUEST['post_id'];
+     $view_data = $_REQUEST['view_data'];
+     
+     $ret = update_post_meta( $_REQUEST['post_id'], 'default_camera_position_direction', $view_data ); 
+     
+     if($ret == true) 
+         echo "successfully updated!";
+     else {
+        echo "failed to updated!";
+     }
+}
+
+add_action( 'wp_ajax_nopriv_post_reset_current_view', 'post_reset_current_view' );
+add_action( 'wp_ajax_post_reset_current_view', 'post_reset_current_view' );
+
+function post_reset_current_view() {
+     $post_id = $_REQUEST['post_id'];
+     
+     $ret = update_post_meta( $_REQUEST['post_id'], 'default_camera_position_direction', '' ); 
+     
+     if($ret == true) 
+         echo "successfully updated!";
+     else {
+        echo "failed to updated!";
+     }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ?>
