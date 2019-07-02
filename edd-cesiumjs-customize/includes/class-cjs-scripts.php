@@ -59,46 +59,6 @@ class EDD_CJS_Scripts {
         				'view_data' => $view_data
         			)
         		);
-    
-    			if( !empty($download_asset_url) ){
-    				ob_start(); ?>
-                    jQuery(document).ready(function(){
-                        Cesium.Ion.defaultAccessToken = "<?php echo $cesium_token;  ?>";
-            
-            		    var viewer = new Cesium.Viewer('cesiumContainer');
-            
-                		var tileset = viewer.scene.primitives.add(
-                			new Cesium.Cesium3DTileset({
-                				url: "<?php echo $download_asset_url;  ?>",
-                				modelMatrix: Cesium.Transforms.eastNorthUpToFixedFrame(Cesium.Cartesian3.fromDegrees(0, 0))
-                			})
-                		);
-                
-                		viewer.zoomTo(tileset)
-                			.otherwise(function (error) {
-                				console.log(error);
-                			});
-            
-                    });
-                <?php
-    			    $inline_script = ob_get_clean();
-    			} else if( !empty($download_asset_id) ) {
-    				ob_start(); ?>
-                    jQuery(document).ready(function(){
-                        Cesium.Ion.defaultAccessToken = "<?php echo $cesium_token; ?>";
-                        var viewer = new Cesium.Viewer('cesiumContainer');
-                    
-                        var imageryLayer = viewer.imageryLayers.addImageryProvider(
-                            new Cesium.IonImageryProvider({ assetId: <?php echo $download_asset_id;  ?> })
-                        );
-                    
-                        viewer.zoomTo(imageryLayer)
-                            .otherwise(function (error) {
-                                console.log(error);
-                            });
-                    });
-                <?php
-    			}
             }
         }
     }
