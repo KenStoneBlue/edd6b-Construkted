@@ -605,6 +605,15 @@ var theApp = (function () {
    
     var tilesets = null;
 
+    // why?
+    // please see wp_content/themes/olam/css/color.css.php
+    // it define tbody, th, td,, tfoot 's background color
+    function applyCesiumCssStyle() {
+        var cesiumNavigationHelp = $('.cesium-click-navigation-help.cesium-navigation-help-instructions');
+
+        cesiumNavigationHelp.find("td").css({"background-color": "rgba(38, 38, 38, 0.75)"});
+    }
+
     function start() {
         $('#exitFPVModeButton').hide();
         
@@ -621,6 +630,8 @@ var theApp = (function () {
         });
         
         create3DMap();
+
+        applyCesiumCssStyle();
     }
 
     function create3DMap() {
