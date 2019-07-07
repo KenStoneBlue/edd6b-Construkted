@@ -419,7 +419,7 @@ EDD_CJS.CameraController = (function () {
         var currentCameraPosition = this._camera.position;
 
         var magnitude = Cesium.Cartesian3.magnitude(currentCameraPosition);
-        var scalar = (magnitude - HUMAN_EYE_HEIGHT + COLLISION_RAY_HEIGHT )  /magnitude;
+        var scalar = (magnitude - HUMAN_EYE_HEIGHT + COLLISION_RAY_HEIGHT )  / magnitude;
 
         var ret = new Cesium.Cartesian3();
 
@@ -647,6 +647,25 @@ var theApp = (function () {
             //fullscreenButton: false
         });
 
+		/* Switch mouse buttons in Cesium viewer:
+            - Left button to rotate
+            - Right button to pan
+            - Wheel to zoom
+            - Middle button to zoom
+        */
+        
+        viewer.scene.screenSpaceCameraController.rotateEventTypes = Cesium.CameraEventType.RIGHT_DRAG;
+        viewer.scene.screenSpaceCameraController.zoomEventTypes = [Cesium.CameraEventType.MIDDLE_DRAG, Cesium.CameraEventType.WHEEL, Cesium.CameraEventType.PINCH];
+    
+        viewer.scene.screenSpaceCameraController.tiltEventTypes = [Cesium.CameraEventType.LEFT_DRAG, Cesium.CameraEventType.PINCH, {
+                eventType : Cesium.CameraEventType.LEFT_DRAG,
+                modifier : Cesium.KeyboardEventModifier.CTRL
+            }, {
+                eventType : Cesium.CameraEventType.RIGHT_DRAG,
+                modifier : Cesium.KeyboardEventModifier.CTRL
+            }];
+
+		
         // hide Cesium credit display
         viewer.bottomContainer.style.visibility ="hidden";
 

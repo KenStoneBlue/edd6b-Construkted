@@ -633,6 +633,24 @@ var theApp = (function () {
             //navigationHelpButton: false,
             //fullscreenButton: false
         });
+		
+		/* Switch mouse buttons in Cesium viewer:
+            - Left button to rotate
+            - Right button to pan
+            - Wheel to zoom
+            - Middle button to zoom
+        */
+        
+        viewer.scene.screenSpaceCameraController.rotateEventTypes = Cesium.CameraEventType.RIGHT_DRAG;
+        viewer.scene.screenSpaceCameraController.zoomEventTypes = [Cesium.CameraEventType.MIDDLE_DRAG, Cesium.CameraEventType.WHEEL, Cesium.CameraEventType.PINCH];
+    
+        viewer.scene.screenSpaceCameraController.tiltEventTypes = [Cesium.CameraEventType.LEFT_DRAG, Cesium.CameraEventType.PINCH, {
+                eventType : Cesium.CameraEventType.LEFT_DRAG,
+                modifier : Cesium.KeyboardEventModifier.CTRL
+            }, {
+                eventType : Cesium.CameraEventType.RIGHT_DRAG,
+                modifier : Cesium.KeyboardEventModifier.CTRL
+            }];
 
         // hide Cesium credit display
         viewer.bottomContainer.style.visibility ="hidden";

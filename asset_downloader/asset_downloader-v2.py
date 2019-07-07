@@ -25,8 +25,8 @@ def get_tileset_url(asset_number, access_token):
     return "https://assets.cesium.com/{}/tileset.json?access_token={}".format(asset_number, access_token)
 
 
-def get_b3dm_file_url(asset_number, access_token, file_uri):
-    return "https://assets.cesium.com/{}/{}?access_token={}".format(asset_number, file_uri, access_token)
+def get_content_url(asset_number, access_token, uri):
+    return "https://assets.cesium.com/{}/{}?access_token={}".format(asset_number, uri, access_token)
 
 
 def get_access_token(asset_number, token):
@@ -42,9 +42,23 @@ def get_access_token(asset_number, token):
             raise
 
 
-def get_tileset(asset_number, access_token):
-    tileset_response = urllib.request.urlopen(get_tileset_url(asset_number, access_token))
-    tileset = zlib.decompress(tileset_response.read(), 16+zlib.MAX_WBITS).decode('utf8').replace("'", '"')
+def get_root_tileset_json(asset_number, access_token):
+    json_url = get_tileset_url(asset_number, access_token)
+    return get_json(json_url)
+
+
+def get_json(json_url):
+    try:
+        tileset_response = urllib.request.urlopen(json_url)
+        tileset = zlib.decompress(tileset_response.read(), 16 + zlib.MAX_WBITS).decode('utf8').replace("'", '"')
+
+    except urllib.error.HTTPError as e:
+        logger.info("Http error")
+        return None
+    except Exception as e:
+        logger.info(type(e))
+        return None
+
     return json.loads(tileset)
 
 
@@ -68,46 +82,59 @@ def extract_value(input, key):
                         yield result
 
 
-def download_b3dm_files(asset_number, access_token, tileset):
-    for file in extract_value(tileset, "uri"):
-        logger.info("Downloading {}".format(file))
+def download_tileset_contents(asset_number, access_token, tileset_json, parent_json_uri):
+    for uri in extract_value(tileset_json, "uri"):
+        logger.info("Downloading {}".format(uri))
 
-        file_url = get_b3dm_file_url(asset_number, access_token, file)
-        file_path = os.path.join(os.getcwd(), asset_number, file)
-        #logger.info("File URL Path {}".format(file_url))
-		
-        os.makedirs(os.path.dirname(file_path), exist_ok = True)
+        tile_content_url = get_content_url(asset_number, access_token, uri)
+        tile_path = os.path.join(os.getcwd(), asset_number, uri)
 
-        if os.path.exists(file_path) and os.path.getsize(file_path):
-            logger.info("Skip downloading {} because already exist".format(file))
+        os.makedirs(os.path.dirname(tile_path), exist_ok = True)
+
+        # found nest json file
+        if uri.rfind(".json") != -1 :
+            parent = "root"
+
+            if parent_json_uri is not None:
+                parent = parent_json_uri
+
+            logger.info("Start downloading nested tileset {} of {}".format(uri, parent))
+            nested_json = get_json(tile_content_url)
+
+            if nested_json is None:
+                logger.info("Failed to download json of nested tileset {} of {}".format(uri, parent))
+            else:
+                # recursive
+                download_tileset_contents(asset_number, access_token, nested_json, uri)
+                logger.info("Finished downloading nested tileset {} of {}".format(uri, parent))
+
+        if os.path.exists(tile_path) and os.path.getsize(tile_path) > 0:
+            logger.info("Skip downloading {} because already exist".format(uri))
             continue
 
         try:
-            b3dm_file_request = urllib.request.urlopen(file_url, timeout = 3)
+            content_file_request = urllib.request.urlopen(tile_content_url, timeout = 3)
 
-            if b3dm_file_request.code != 200:
-                logger.info("Failed to download {}".format(file_url))
-                failed_tiles.append(file)
+            if content_file_request.code != 200:
+                logger.info("Failed to download {}".format(tile_content_url))
+                failed_tiles.append(uri)
                 continue
 
-            b3dm_file_zip_stream = zlib.decompress(b3dm_file_request.read(), 16+zlib.MAX_WBITS)
+            file_zip_stream = zlib.decompress(content_file_request.read(), 16+zlib.MAX_WBITS)
 
-            local_file = open(file_path, 'wb')
-            local_file.write(b3dm_file_zip_stream)
+            local_file = open(tile_path, 'wb')
+            local_file.write(file_zip_stream)
             local_file.close()
         except TimeoutError:
-            logger.info("Failed to download {}".format(file_url))
-            failed_tiles.append(file)
+            logger.info("Failed to download {}".format(tile_content_url))
+            failed_tiles.append(uri)
         except ConnectionResetError:
-            logger.info("Failed to download {}".format(file_url))
-            failed_tiles.append(file)
+            logger.info("Failed to download {}".format(tile_content_url))
+            failed_tiles.append(uri)
         except Exception as e:
             logger.info(type(e))
-            logger.info("Failed to download {}".format(file_url))
-            failed_tiles.append(file)
-				
-        #wget.download(file_url, file_path) 
-		#urllib.request.urlretrieve(file_url, file_path)
+            logger.info("Failed to download {}".format(tile_content_url))
+            failed_tiles.append(uri)
 
 def retry_failed_to_download_tiles(asset_number, access_token):
     global failed_tiles
@@ -120,21 +147,21 @@ def retry_failed_to_download_tiles(asset_number, access_token):
     for tile in failed_tiles:
         logger.info("Retrying downloading {}".format(tile))
 
-        file_url = get_b3dm_file_url(asset_number, access_token, tile)
+        file_url = get_content_url(asset_number, access_token, tile)
         file_path = os.path.join(os.getcwd(), asset_number, tile)
 
         try:
-            b3dm_file_request = urllib.request.urlopen(file_url, timeout = 3)
+            content_file_request = urllib.request.urlopen(file_url, timeout = 3)
 
-            if b3dm_file_request.code != 200:
+            if content_file_request.code != 200:
                 logger.info("Failed to download {}".format(file_url))
                 new_failed_tiles.append(tile)
                 continue
 
-            b3dm_file_zip_stream = zlib.decompress(b3dm_file_request.read(), 16+zlib.MAX_WBITS)
+            file_zip_stream = zlib.decompress(content_file_request.read(), 16+zlib.MAX_WBITS)
 
             local_file = open(file_path, 'wb')
-            local_file.write(b3dm_file_zip_stream)
+            local_file.write(file_zip_stream)
             local_file.close()
         except TimeoutError:
             logger.info("Failed to download {}".format(file_url))
@@ -161,13 +188,13 @@ def main():
         return
 
     logger.info("Downloading tileset")
-    tileset = get_tileset(asset_number, access_token)
+    tileset = get_root_tileset_json(asset_number, access_token)
 
     logger.info("Saving tileset")
     save_tileset(asset_number, tileset)
 
-    logger.info("Downloading b3dm files")
-    download_b3dm_files(asset_number, access_token, tileset)
+    logger.info("Start Downloading")
+    download_tileset_contents(asset_number, access_token, tileset, None)
     retry_failed_to_download_tiles(asset_number, access_token)
 
     logger.info("All done")
