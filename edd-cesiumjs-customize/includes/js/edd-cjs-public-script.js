@@ -609,8 +609,11 @@ var theApp = (function () {
     // please see wp_content/themes/olam/css/color.css.php
     // it define tbody, th, td,, tfoot 's background color
     function applyCesiumCssStyle() {
+	// Change background of Mouse navigation help menu
         var cesiumNavigationHelp = $('.cesium-click-navigation-help.cesium-navigation-help-instructions');
-
+        cesiumNavigationHelp.find("td").css({"background-color": "rgba(38, 38, 38, 0.75)"});
+	// Change background of Touch navigation help menu
+	var cesiumNavigationHelp = $('.cesium-touch-navigation-help.cesium-navigation-help-instructions');
         cesiumNavigationHelp.find("td").css({"background-color": "rgba(38, 38, 38, 0.75)"});
     }
 
