@@ -33,7 +33,10 @@
  * - Added a hyphen between slug and file name when file gets renamed before sending to S3
  * - Added load speed optimizations as suggested by Omar
  * - Modified keyboard key assignments, so "A" and "D" move the camera rather then rotate it.
- * 
+ 1.0.5
+- Remove the CDATA tags that appear in the html source for the asset pages
+- Background terrain is not showing up anymore
+ 
  */
 
 // Exit if accessed directly
