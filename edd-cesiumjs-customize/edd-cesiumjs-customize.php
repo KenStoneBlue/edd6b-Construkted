@@ -302,6 +302,32 @@ function post_reset_current_view() {
      }
 }
 
+add_action( 'wp_ajax_nopriv_get_post_data', 'get_post_data' );
+add_action( 'wp_ajax_get_post_data', 'get_post_data');
+
+function get_post_data() {
+    $edd_cjs_options = get_option( 'edd_cjs_options' );
+    
+    $cesium_token = $edd_cjs_options['edd_cjs_cesiumjs_token_key'];
+    
+    $post_id = $_REQUEST['post_id'];
+     
+    $download_asset_id = get_post_meta( $post_id, 'download_asset_id', true );
+    $download_asset_url = get_post_meta( $post_id, 'download_asset_url', true );
+    $view_data = get_post_meta( $post_id, 'default_camera_position_direction', true);
+    
+    $data->cesium_token = $cesium_token;
+    $data->download_asset_id = $download_asset_id;
+    $data->download_asset_url = $download_asset_url;
+    $data->view_data = $view_data;
+    
+    $json = json_encode($data);
+    
+    echo $json;
+}
+
+
+
 
 
 

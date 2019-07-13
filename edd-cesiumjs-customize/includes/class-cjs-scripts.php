@@ -35,16 +35,13 @@ class EDD_CJS_Scripts {
             $post_id = $post->ID;
     		$download_asset_id = get_post_meta( $post_id, 'download_asset_id', true );
             $download_asset_url = get_post_meta( $post_id, 'download_asset_url', true );
-            $view_data = get_post_meta( $post_id, 'default_camera_position_direction', true );
-    	    $cesium_token = $edd_cjs_options['edd_cjs_cesiumjs_token_key'];
-    	    
-    
+
             if( !empty($download_asset_id) || !empty($download_asset_url) ){
     			$inline_script = "";
     
         		// add css for check code in public
-        		wp_enqueue_style( 'edd-cjs-cesium-widgets-style',  'https://cesiumjs.org/releases/1.57/Build/Cesium/Widgets/widgets.css', array(), EDD_CJS_LIB_VER );
-                wp_enqueue_script('edd-cjs-cesium-script', 'https://cesiumjs.org/releases/1.57/Build/Cesium/Cesium.js', array('jquery'), EDD_CJS_LIB_VER, true);
+        		wp_enqueue_style( 'edd-cjs-cesium-widgets-style',  'https://cesiumjs.org/releases/1.59/Build/Cesium/Widgets/widgets.css', array(), EDD_CJS_LIB_VER );
+                wp_enqueue_script('edd-cjs-cesium-script', 'https://cesiumjs.org/releases/1.59/Build/Cesium/Cesium.js', array('jquery'), EDD_CJS_LIB_VER, true);
             
     			wp_register_script('edd-cjs-public-script', EDD_CJS_INC_URL . '/js/edd-cjs-public-script.js', array('jquery','edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
                 wp_enqueue_script('edd-cjs-public-script');
@@ -52,13 +49,11 @@ class EDD_CJS_Scripts {
         		wp_localize_script( 'edd-cjs-public-script', 'EDD_CJS_PUBLIC_AJAX',
         			array(
         				'ajaxurl' => admin_url( 'admin-ajax.php' ),
-        				'post_id' => $post_id,
-    					'download_asset_id' => $download_asset_id,
-                        'download_asset_url' => $download_asset_url,
-        				'cesium_token' => $cesium_token,
-        				'view_data' => $view_data
+        				'post_id' => $post_id
         			)
         		);
+    
+    		
             }
         }
     }

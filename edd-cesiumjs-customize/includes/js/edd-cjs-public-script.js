@@ -419,7 +419,7 @@ EDD_CJS.CameraController = (function () {
         var currentCameraPosition = this._camera.position;
 
         var magnitude = Cesium.Cartesian3.magnitude(currentCameraPosition);
-        var scalar = (magnitude - HUMAN_EYE_HEIGHT + COLLISION_RAY_HEIGHT )  / magnitude;
+        var scalar = (magnitude - HUMAN_EYE_HEIGHT + COLLISION_RAY_HEIGHT )  /magnitude;
 
         var ret = new Cesium.Cartesian3();
 
@@ -604,16 +604,15 @@ var theApp = (function () {
   
    
     var tilesets = null;
-
+    
     // why?
     // please see wp_content/themes/olam/css/color.css.php
     // it define tbody, th, td,, tfoot 's background color
+    
     function applyCesiumCssStyle() {
-	// Change background of Mouse navigation help menu
         var cesiumNavigationHelp = $('.cesium-click-navigation-help.cesium-navigation-help-instructions');
         cesiumNavigationHelp.find("td").css({"background-color": "rgba(38, 38, 38, 0.75)"});
-	// Change background of Touch navigation help menu
-	var cesiumNavigationHelp = $('.cesium-touch-navigation-help.cesium-navigation-help-instructions');
+		var cesiumNavigationHelp = $('.cesium-touch-navigation-help.cesium-navigation-help-instructions');
         cesiumNavigationHelp.find("td").css({"background-color": "rgba(38, 38, 38, 0.75)"});
     }
 
@@ -633,7 +632,6 @@ var theApp = (function () {
         });
         
         create3DMap();
-
         applyCesiumCssStyle();
     }
 
@@ -649,8 +647,8 @@ var theApp = (function () {
             //navigationHelpButton: false,
             //fullscreenButton: false
         });
-
-		/* Switch mouse buttons in Cesium viewer:
+        
+        /* Switch mouse buttons in Cesium viewer:
             - Left button to rotate
             - Right button to pan
             - Wheel to zoom
@@ -668,7 +666,6 @@ var theApp = (function () {
                 modifier : Cesium.KeyboardEventModifier.CTRL
             }];
 
-		
         // hide Cesium credit display
         viewer.bottomContainer.style.visibility ="hidden";
 
@@ -792,5 +789,28 @@ var theApp = (function () {
 jQuery(document).ready(function(){
     console.log(EDD_CJS_PUBLIC_AJAX);
     
-    theApp.start();
+    $.ajax({
+    		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
+    		type : 'post',
+    		data : {
+    			action : 'get_post_data',
+    			post_id : EDD_CJS_PUBLIC_AJAX.post_id,
+    		},
+    		success : function( response ) {
+    		    // I am not sure why?
+    		    var json_string = response.substring(0, response.length -1);
+    		    
+    		    var data = JSON.parse(json_string);
+    		    
+    		    EDD_CJS_PUBLIC_AJAX.download_asset_url = data.download_asset_url;
+    		    EDD_CJS_PUBLIC_AJAX.download_asset_id = data.download_asset_id;
+    		    EDD_CJS_PUBLIC_AJAX.cesium_token = data.cesium_token;
+    		    EDD_CJS_PUBLIC_AJAX.view_data = data.view_data;
+    		    
+    			theApp.start();
+    		},
+    		error: function(xhr,status,error) {
+    		    alert("Failed to get data for given asset!");
+    		}
+        });
 });
