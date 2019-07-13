@@ -3,7 +3,7 @@
  * Plugin Name: EDD CesiumJS Customize
  * Plugin URI: http://www.construkted.com/
  * Description: EDD CesiumJS Customize
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: Construkted Team
  * Author URI: http://www.construkted.com/
  * Text Domain: edd_cjs
