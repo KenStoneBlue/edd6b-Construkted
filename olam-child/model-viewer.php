@@ -2,7 +2,7 @@
 
 <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cesiumjs.org/releases/1.57/Build/Cesium/Cesium.js"></script>
+    <script src="https://cesiumjs.org/releases/1.59/Build/Cesium/Cesium.js"></script>
     <style>
       html, body, #cesiumContainer {
           width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
@@ -10,7 +10,7 @@
     </style>
     
     <script src="https://edd6.construkted.com/static/cesium-viewer.js"></script>
-    <link rel="stylesheet" href="https://cesiumjs.org/releases/1.57/Build/Cesium/Widgets/widgets.css">
+    <link rel="stylesheet" href="https://cesiumjs.org/releases/1.59/Build/Cesium/Widgets/widgets.css">
 </head>    
 
 <div id="cesiumContainer" style="width:100%; height:100%px">
