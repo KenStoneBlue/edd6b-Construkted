@@ -637,16 +637,19 @@ var theApp = (function () {
 
     function create3DMap() {
         viewer = new Cesium.Viewer('cesiumContainer', {
-            terrainProvider: Cesium.createWorldTerrain(),
             animation: false,
             homeButton: false, //  the HomeButton widget will not be created.
             baseLayerPicker: false, // If set to false, the BaseLayerPicker widget will not be created.
             geocoder: false,
             sceneModePicker: false,
             timeline: false,
-            //navigationHelpButton: false,
-            //fullscreenButton: false
+            fullscreenElement: "cesiumContainer"
         });
+        
+        var terrainDisable = EDD_CJS_PUBLIC_AJAX.download_asset_id.length && EDD_CJS_PUBLIC_AJAX.download_asset_id == "32717";
+        
+        if(!terrainDisable)
+            viewer.terrainProvider = Cesium.createWorldTerrain();
         
         /* Switch mouse buttons in Cesium viewer:
             - Left button to rotate
@@ -668,7 +671,35 @@ var theApp = (function () {
 
         // hide Cesium credit display
         viewer.bottomContainer.style.visibility ="hidden";
-
+        
+        // Change the text in the Help menu
+        
+        $(".cesium-navigation-help-pan").text("Rotate view");
+        $(".cesium-navigation-help-zoom").text("Pan view");
+        $(".cesium-navigation-help-rotate").text("Zoom view");
+        
+        var navigationHelpDetailsElements = $(".cesium-navigation-help-details");
+        
+        for(var i = 0; i < navigationHelpDetailsElements.length; i++) {
+            var element = navigationHelpDetailsElements[i];
+            
+            if(element.textContent == "Right click + drag, or") {
+                element.textContent = "Right click + drag";
+            }
+            
+            if(element.textContent == "Mouse wheel scroll") {
+                element.textContent = "";
+            }
+            
+            if(element.textContent == "Middle click + drag, or") {
+                element.textContent = "Scroll mouse wheel";
+            }
+            
+            if(element.textContent == "CTRL + Left/Right click + drag") {
+                element.textContent = "Middle click + drag";
+            }
+        }
+        
         if( EDD_CJS_PUBLIC_AJAX.download_asset_url.length ){
             var cesiumTilesetURL = EDD_CJS_PUBLIC_AJAX.download_asset_url;
 
