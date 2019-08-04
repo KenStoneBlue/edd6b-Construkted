@@ -220,6 +220,9 @@ class EDD_CJS_Public {
 		if( !empty($fields['default_camera_position_direction']) ){
 			unset($fields['default_camera_position_direction']);
 		}
+		if( !empty($fields['asset_geo-location']) ){
+			unset($fields['asset_geo-location']);
+		}
 		
 
 		return $fields;
