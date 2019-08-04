@@ -4,9 +4,22 @@ import logging
 import os
 import urllib.request, urllib.error
 import zlib
+import threading
+
+g_asset_number = ''
+g_access_token = ''
+g_tileset = None
+
+threadLock = threading.Lock()
+download_started_tiles = []
+retry_started_tiles = []
 
 failed_tiles = []
+
+failed_tiles_in_retry = []
+
 parser = argparse.ArgumentParser()
+parser.add_argument("worker_count")
 parser.add_argument("asset_number")
 parser.add_argument("token")
 args = vars(parser.parse_args())
@@ -79,60 +92,85 @@ def extract_value(input, key):
                     for result in extract_value(list_item, key):
                         yield result
 
+class DownloadWorker(threading.Thread):
+    def __init__(self, _id):
+        threading.Thread.__init__(self)
+        self.id = _id
 
-def download_tileset_contents(asset_number, access_token, tileset_json, parent_json_uri):
-    for uri in extract_value(tileset_json, "uri"):
-        logger.info("Downloading {}".format(uri))
+    def run(self):
+        logger.info("Download Worker {} started".format(self.id))
 
-        tile_content_url = get_content_url(asset_number, access_token, uri)
-        tile_path = os.path.join(os.getcwd(), asset_number, uri)
+        self.download_tileset_contents(g_asset_number, g_access_token, g_tileset, None)
 
-        os.makedirs(os.path.dirname(tile_path), exist_ok = True)
+    def download_tileset_contents(self, asset_number, access_token, tileset_json, parent_json_uri):
+        for uri in extract_value(tileset_json, "uri"):
+            # download_started_tiles
 
-        # found nest json file
-        if uri.rfind(".json") != -1 :
-            parent = "root"
+            threadLock.acquire()
 
-            if parent_json_uri is not None:
-                parent = parent_json_uri
-
-            logger.info("Start downloading nested tileset {} of {}".format(uri, parent))
-            nested_json = get_json(tile_content_url)
-
-            if nested_json is None:
-                logger.info("Failed to download json of nested tileset {} of {}".format(uri, parent))
+            if uri in download_started_tiles:
+                threadLock.release()
+                continue
             else:
-                # recursive
-                download_tileset_contents(asset_number, access_token, nested_json, uri)
-                logger.info("Finished downloading nested tileset {} of {}".format(uri, parent))
+                download_started_tiles.append(uri)
 
-        if os.path.exists(tile_path) and os.path.getsize(tile_path) > 0:
-            logger.info("Skip downloading {} because already exist".format(uri))
-            continue
+            threadLock.release()
 
-        try:
-            content_file_request = urllib.request.urlopen(tile_content_url, timeout = 3)
+            logger.info("Downloading {} in download worker {}".format(uri, self.id))
 
-            if content_file_request.code != 200:
-                logger.info("Failed to download {}".format(tile_content_url))
-                failed_tiles.append(uri)
+            tile_content_url = get_content_url(asset_number, access_token, uri)
+            tile_path = os.path.join(os.getcwd(), asset_number, uri)
+
+            os.makedirs(os.path.dirname(tile_path), exist_ok = True)
+
+            # found nest json file
+            if uri.rfind(".json") != -1 :
+                parent = "root"
+
+                if parent_json_uri is not None:
+                    parent = parent_json_uri
+
+                logger.info("Start downloading nested tileset {} of {}".format(uri, parent))
+                nested_json = get_json(tile_content_url)
+
+                if nested_json is None:
+                    logger.info("Failed to download json of nested tileset {} of {}".format(uri, parent))
+                else:
+                    # recursive
+                    self.download_tileset_contents(asset_number, access_token, nested_json, uri)
+                    logger.info("Finished downloading nested tileset {} of {}".format(uri, parent))
+
+            if os.path.exists(tile_path) and os.path.getsize(tile_path) > 0:
+                logger.info("Skip downloading {} because already exist".format(uri))
                 continue
 
-            file_zip_stream = zlib.decompress(content_file_request.read(), 16+zlib.MAX_WBITS)
+            try:
+                content_file_request = urllib.request.urlopen(tile_content_url, timeout = 3)
 
-            local_file = open(tile_path, 'wb')
-            local_file.write(file_zip_stream)
-            local_file.close()
-        except TimeoutError:
-            logger.info("Failed to download {}".format(tile_content_url))
-            failed_tiles.append(uri)
-        except ConnectionResetError:
-            logger.info("Failed to download {}".format(tile_content_url))
-            failed_tiles.append(uri)
-        except Exception as e:
-            logger.info(type(e))
-            logger.info("Failed to download {}".format(tile_content_url))
-            failed_tiles.append(uri)
+                if content_file_request.code != 200:
+                    self.add_failed_tile(uri, tile_content_url)
+
+                    continue
+
+                file_zip_stream = zlib.decompress(content_file_request.read(), 16+zlib.MAX_WBITS)
+
+                local_file = open(tile_path, 'wb')
+                local_file.write(file_zip_stream)
+                local_file.close()
+            except TimeoutError:
+                self.add_failed_tile(uri, tile_content_url)
+            except ConnectionResetError:
+                self.add_failed_tile(uri, tile_content_url)
+            except Exception as e:
+                logger.info(type(e))
+                self.add_failed_tile(uri, tile_content_url)
+
+    def add_failed_tile(self, uri, tile_content_url):
+        logger.info("Failed to download {} in download worker {}".format(tile_content_url, self.id))
+
+        threadLock.acquire()
+        failed_tiles.append(uri)
+        threadLock.release()
 
 def retry_failed_to_download_tiles(asset_number, access_token):
     global failed_tiles
@@ -177,26 +215,44 @@ def retry_failed_to_download_tiles(asset_number, access_token):
 
 
 def main():
-    asset_number = args["asset_number"]
-    token = args["token"]
+    global g_asset_number, g_access_token, g_tileset
 
-    logger.info("Processing asset {}".format(asset_number))
-    access_token = get_access_token(asset_number, token)
-    if access_token is None:
+    g_asset_number = args["asset_number"]
+    token = args["token"]
+    thread_count = args["worker_count"]
+
+    thread_count = int(thread_count)
+
+    logger.info("Processing asset {}".format(g_asset_number))
+    g_access_token = get_access_token(g_asset_number, token)
+    if g_access_token is None:
         return
 
     logger.info("Downloading tileset")
-    tileset = get_root_tileset_json(asset_number, access_token)
+    g_tileset = get_root_tileset_json(g_asset_number, g_access_token)
 
     logger.info("Saving tileset")
-    save_tileset(asset_number, tileset)
+    save_tileset(g_asset_number, g_tileset)
 
-    logger.info("Start Downloading")
-    download_tileset_contents(asset_number, access_token, tileset, None)
-    retry_failed_to_download_tiles(asset_number, access_token)
+    logger.info("Initializing download workers")
+
+    threads = []
+    thread_id = 1
+
+    for x in range(thread_count):
+        worker = DownloadWorker(thread_id)
+
+        worker.start()
+        threads.append(worker)
+        thread_id += 1
+
+    # Wait for all threads to complete
+    for t in threads:
+        t.join()
+
+    retry_failed_to_download_tiles(g_asset_number, g_access_token)
 
     logger.info("All done")
-
 
 if __name__ == "__main__":
     main()
