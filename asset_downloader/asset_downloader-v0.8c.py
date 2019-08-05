@@ -23,6 +23,7 @@ import threading
 ## New
 start_execution_time = time.time()
 failed_retry_function_invoke_counter = 0
+download_file_counter = 0
 ##
 
 g_asset_number = ''
@@ -148,7 +149,7 @@ class DownloadWorker(threading.Thread):
         self.download_tileset(g_asset_number, g_access_token)
 
     def download_tileset(self, asset_number, access_token):
-         global total_files_to_download, download_file_counter, tiles_uri
+         global download_file_counter, tiles_uri
 
          for uri in tiles_uri:
             # download_started_tiles
@@ -165,7 +166,7 @@ class DownloadWorker(threading.Thread):
             download_file_counter += 1
             
             execution_time = round((time.time() - start_execution_time), 1)
-            logger.info("{}s :: Failed {} :: Downloading {}/{} :: Worker Thread {} :: {}".format(execution_time, len(failed_tiles), download_file_counter, total_files_to_download, self.id, uri))
+            logger.info("{}s :: Failed {} :: Downloading {}/{} :: Worker Thread {} :: {}".format(execution_time, len(failed_tiles), download_file_counter, len(tiles_uri), self.id, uri))
 
             tile_content_url = get_content_url(asset_number, access_token, uri)
             tile_path = os.path.join(os.getcwd(), asset_number, uri)
@@ -285,7 +286,7 @@ def main():
 ## New
     logger.info("Count files to download")
     build_file_list(g_asset_number, g_access_token, g_tileset, None)
-    logger.info("There are {} files to download".format(total_files_to_download))
+    logger.info("There are {} files to download".format(len(tiles_uri)))
 ##
 
     logger.info("Initializing download workers")
