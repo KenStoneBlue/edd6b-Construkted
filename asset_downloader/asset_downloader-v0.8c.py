@@ -6,6 +6,7 @@
 # - Optomizations
 # version: 0.8
 # - Added multithreading capabilities
+# - Changed logic for tile download
 #
 #
 # syntax: asset_downloader.py <worker count> <asset number> <access token>
@@ -22,8 +23,6 @@ import threading
 ## New
 start_execution_time = time.time()
 failed_retry_function_invoke_counter = 0
-total_files_to_download = 0
-download_file_counter = 0
 ##
 
 g_asset_number = ''
@@ -75,11 +74,10 @@ def get_access_token(asset_number, token):
             raise
 
 def build_file_list(asset_number, access_token, tileset_json, parent_json_uri):
-    global total_files_to_download, tiles_uri
+    global tiles_uri
         
     for uri in extract_value(tileset_json, "uri"):
         tiles_uri.append(uri)
-        total_files_to_download += 1    
         
         tile_content_url = get_content_url(asset_number, access_token, uri)
         # found nest json file
