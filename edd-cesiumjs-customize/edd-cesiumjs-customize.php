@@ -3,7 +3,7 @@
  * Plugin Name: EDD CesiumJS Customize
  * Plugin URI: http://www.construkted.com/
  * Description: EDD CesiumJS Customize
- * Version: 1.0.5
+ * Version: 1.0.4
  * Author: Construkted Team
  * Author URI: http://www.construkted.com/
  * Text Domain: edd_cjs
@@ -33,10 +33,7 @@
  * - Added a hyphen between slug and file name when file gets renamed before sending to S3
  * - Added load speed optimizations as suggested by Omar
  * - Modified keyboard key assignments, so "A" and "D" move the camera rather then rotate it.
- * 1.0.5
- * - Remove the CDATA tags that appear in the html source for the asset pages
- * - Background terrain is not showing up anymore
- 
+ * 
  */
 
 // Exit if accessed directly
@@ -143,7 +140,7 @@ $edd_cjs_public = new EDD_CJS_Public();
 $edd_cjs_public->add_hooks();
 
 /**
- * Example Widget Class
+ * Asset Editor Widget
  */
 class asset_editor extends WP_Widget {
      /** constructor -- name this the same as the class above */
@@ -191,6 +188,65 @@ class asset_editor extends WP_Widget {
 } // end class asset_editor
 
 add_action('widgets_init', create_function('', 'return register_widget("asset_editor");'));
+/**
+ * Asset Editor Widget End
+ */
+
+/**
+ * Geo-Location Editor Widget
+ */
+class geolocation_editor extends WP_Widget {
+     /** constructor -- name this the same as the class above */
+    function geolocation_editor() {
+        parent::WP_Widget(false, $name = 'Geo-Location Editor');	
+    }
+ 
+    /** @see WP_Widget::widget -- do not rename this */
+    function widget($args, $instance) {	
+        extract( $args );
+        $title 		= apply_filters('widget_title', $instance['title']);
+        $message 	= $instance['message'];
+        ?>
+              <?php echo $before_widget; ?>
+                  <?php if ( $title )
+                        echo $before_title . $title . $after_title; ?>
+ 							<ul>
+								<li>Lat: <input type="text" id ="tileset_latitude" size="15"/></li>
+								<li>Lon: <input type="text" id="tileset_longitude" size="15"/></li>
+								<li>Alt: <input type="text" id="tileset_altitude" size="15"/></li>
+								<li>Heading: <input type="text" id="tileset_heading" size="15"/></li>
+								<li><button id = "set_tileset_model_matrix_json">Save Geo-Location</button></li>
+							</ul>
+              <?php echo $after_widget; ?>
+        <?php
+    }
+ 
+    /** @see WP_Widget::update -- do not rename this */
+    function update($new_instance, $old_instance) {		
+		$instance = $old_instance;
+		$instance['title'] = strip_tags($new_instance['title']);
+
+        return $instance;
+    }
+ 
+    /** @see WP_Widget::form -- do not rename this */
+    function form($instance) {	
+        $title 		= esc_attr($instance['title']);
+        $message	= esc_attr($instance['message']);
+        ?>
+         <p>
+          <label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label> 
+          <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" />
+        </p>
+        <?php 
+    }
+} // end class asset_editor
+
+add_action('widgets_init', create_function('', 'return register_widget("geolocation_editor");'));
+
+/**
+ * Geo-Location Editor Widget End
+ */
 
 add_action( 'wp_ajax_nopriv_post_set_thumbnail', 'post_set_thumbnail' );
 add_action( 'wp_ajax_post_set_thumbnail', 'post_set_thumbnail' );
@@ -318,33 +374,43 @@ function get_post_data() {
     $download_asset_id = get_post_meta( $post_id, 'download_asset_id', true );
     $download_asset_url = get_post_meta( $post_id, 'download_asset_url', true );
     $view_data = get_post_meta( $post_id, 'default_camera_position_direction', true);
+    $tileset_model_matrix_json = get_post_meta( $post_id, 'asset_geo-location', true);
     
     $data->cesium_token = $cesium_token;
     $data->download_asset_id = $download_asset_id;
     $data->download_asset_url = $download_asset_url;
     $data->view_data = $view_data;
+    $data->tileset_model_matrix_json = $tileset_model_matrix_json;
     
     $json = json_encode($data);
     
     echo $json;
 }
 
+add_action( 'wp_ajax_nopriv_get_tileset_model_matrix_json', 'get_tileset_model_matrix_json');
+add_action( 'wp_ajax_get_tileset_model_matrix_data_json', 'get_tileset_model_matrix_json');
 
+function get_tileset_model_matrix_json() {
+    $post_id = $_REQUEST['post_id'];
 
+    $tileset_model_matrix_json = get_post_meta( $post_id, 'asset_geo-location', true );
 
+    echo $tileset_model_matrix_json;
+}
 
+add_action( 'wp_ajax_nopriv_set_tileset_model_matrix_json', 'set_tileset_model_matrix_json');
+add_action( 'wp_ajax_set_tileset_model_matrix_json', 'set_tileset_model_matrix_json');
 
+function set_tileset_model_matrix_json() {
+    $post_id = $_REQUEST['post_id'];
+    $tileset_model_matrix_json = $_REQUEST['tileset_model_matrix_json'];
 
+    $ret = update_post_meta( $post_id, 'asset_geo-location', $tileset_model_matrix_json );
 
+    $data->ret = $ret;
 
+    $json = json_encode($data);
 
-
-
-
-
-
-
-
-
-
+    echo $json;
+}
 ?>

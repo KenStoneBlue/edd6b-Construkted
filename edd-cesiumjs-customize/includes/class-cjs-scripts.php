@@ -24,7 +24,7 @@ class EDD_CJS_Scripts {
 	 * Adding Scripts for check code public
 	 */
 	public function wedd_cjs_public_scripts(){
-        global $post, $product;
+        global $post;
 
         $edd_cjs_options = get_option( 'edd_cjs_options' );
 
@@ -37,13 +37,21 @@ class EDD_CJS_Scripts {
             $download_asset_url = get_post_meta( $post_id, 'download_asset_url', true );
 
             if( !empty($download_asset_id) || !empty($download_asset_url) ){
-    			$inline_script = "";
-    
         		// add css for check code in public
         		wp_enqueue_style( 'edd-cjs-cesium-widgets-style',  'https://cesiumjs.org/releases/1.59/Build/Cesium/Widgets/widgets.css', array(), EDD_CJS_LIB_VER );
                 wp_enqueue_script('edd-cjs-cesium-script', 'https://cesiumjs.org/releases/1.59/Build/Cesium/Cesium.js', array('jquery'), EDD_CJS_LIB_VER, true);
+
+                $script_dir = '/wp-content/plugins/edd-cesiumjs-customize.1.0.4/includes/js/';
+
+                wp_enqueue_script('edd-cjs-camera-controller-script',  $script_dir . 'edd-cjs-camera-controller.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
+                wp_enqueue_script('edd-cjs-3dtileset-location-editor-script', $script_dir . 'edd-cjs-3dtileset-location-editor.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
             
-    			wp_register_script('edd-cjs-public-script', EDD_CJS_INC_URL . '/js/edd-cjs-public-script.js', array('jquery','edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
+    			wp_register_script('edd-cjs-public-script', EDD_CJS_INC_URL . '/js/edd-cjs-public-script.js',
+                                   array('jquery',
+                                          'edd-cjs-camera-controller-script',
+                                          'edd-cjs-3dtileset-location-editor-script',
+                                          'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
+
                 wp_enqueue_script('edd-cjs-public-script');
                 
         		wp_localize_script( 'edd-cjs-public-script', 'EDD_CJS_PUBLIC_AJAX',
@@ -52,8 +60,6 @@ class EDD_CJS_Scripts {
         				'post_id' => $post_id
         			)
         		);
-    
-    		
             }
         }
     }
