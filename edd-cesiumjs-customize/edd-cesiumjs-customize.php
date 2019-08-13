@@ -215,7 +215,13 @@ class geolocation_editor extends WP_Widget {
 								<li>Lon: <input type="text" id="tileset_longitude" size="15"/></li>
 								<li>Alt: <input type="text" id="tileset_altitude" size="15"/></li>
 								<li>Heading: <input type="text" id="tileset_heading" size="15"/></li>
-								<li><button id = "set_tileset_model_matrix_json">Save Geo-Location</button></li>
+
+                                <?php
+                                    global $post;
+
+                                    if($post->post_author == get_current_user_id())
+								        echo '<li><button id = "set_tileset_model_matrix_json">Save Geo-Location</button></li>';
+                                ?>
 							</ul>
               <?php echo $after_widget; ?>
         <?php
@@ -375,12 +381,14 @@ function get_post_data() {
     $download_asset_url = get_post_meta( $post_id, 'download_asset_url', true );
     $view_data = get_post_meta( $post_id, 'default_camera_position_direction', true);
     $tileset_model_matrix_json = get_post_meta( $post_id, 'asset_geo-location', true);
+    $post_slug = get_post_field( 'post_name', $post_id );
     
     $data->cesium_token = $cesium_token;
     $data->download_asset_id = $download_asset_id;
     $data->download_asset_url = $download_asset_url;
     $data->view_data = $view_data;
     $data->tileset_model_matrix_json = $tileset_model_matrix_json;
+    $data->post_slug = $post_slug;
     
     $json = json_encode($data);
     
@@ -405,7 +413,7 @@ function set_tileset_model_matrix_json() {
     $post_id = $_REQUEST['post_id'];
     $tileset_model_matrix_json = $_REQUEST['tileset_model_matrix_json'];
 
-	$ret0 = update_post_meta( $_REQUEST['post_id'], 'default_camera_position_direction', '' );
+    $ret0 = update_post_meta( $_REQUEST['post_id'], 'default_camera_position_direction', '' );
     $ret = update_post_meta( $post_id, 'asset_geo-location', $tileset_model_matrix_json );
 
     $data->ret = $ret;

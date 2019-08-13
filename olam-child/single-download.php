@@ -44,26 +44,25 @@ get_header(); ?>
                         <?php
                         $download_asset_id = get_post_meta( get_the_ID(), 'download_asset_id', true );
                         $download_asset_url = get_post_meta( get_the_ID(), 'download_asset_url', true );
-                        if( !empty($download_asset_id) || !empty($download_asset_url) ){
+
+                        $display_3dtileset = true;
+
+                        //if( !empty($download_asset_id) || !empty($download_asset_url) ){
+                        if($display_3dtileset){
                             echo '<div class ="preview-area">
-            <div id="cesiumContainer" style="width:100%; height:500px"></div>
-            <div id="toolbar">
-                <button id="exitFPVModeButton" class="cesium-button">EXIT FPV MODE</button>
-            </div>
-        </div>
-       ';
+                                    <div id="cesiumContainer" style="width:100%; height:500px"></div>
+                                    <div id="toolbar">
+                                        <button id="exitFPVModeButton" class="cesium-button">EXIT FPV MODE</button>
+                                    </div>
+                                  </div>
+                                 ';
                         } else { ?>
                             <div class="preview-area">
                                 <div class="preview-image">
 
                                     <?php
                                     if(isset($videoCode[0]) && (strlen($videoCode[0])>0) ){
-                                        //     if(is_numeric($videoCode[0])){
-                                        //         $videoUrl=wp_get_attachment_url($videoCode[0]);
-                                        //     }
-                                        //     else{
                                         $videoUrl=$videoCode[0];//wp_get_attachment_url($videoCode[0]);
-                                        //    }
                                         $videoFlag=1;
 
                                         if (strpos($videoUrl, 'vimeo') !== false) {
@@ -71,14 +70,12 @@ get_header(); ?>
                                         } else {
                                             echo '<div class="banner-media othervid">'.do_shortcode("[video src='".esc_url($videoUrl)."']").'</div>';
                                         }
-
                                     }
                                     else if(isset($audioCode[0]) && (strlen($audioCode[0])>0) ){
                                         $audioUrl=wp_get_attachment_url($audioCode[0]);
                                         echo '<div class="banner-media audiomed">'.do_shortcode("[audio src='".$audioUrl."']").'</div>';
                                     }
                                     ?>
-
 
                                     <!--  Post Image Gallery  -->
                                     <?php

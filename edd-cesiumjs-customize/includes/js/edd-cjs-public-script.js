@@ -128,6 +128,19 @@ var theApp = (function () {
                     loadSiblings : true
                 })
             );
+        } else {
+            Cesium.Ion.defaultAccessToken = EDD_CJS_PUBLIC_AJAX.cesium_token;
+
+            var tilesetURLInOtherServer = "https://18.216.24.61/3DTileServer/index.php/asset/" +  EDD_CJS_PUBLIC_AJAX.post_slug + "/tileset.json";
+
+            tilesets = viewer.scene.primitives.add(
+                new Cesium.Cesium3DTileset({
+                    url: tilesetURLInOtherServer,
+                    immediatelyLoadDesiredLevelOfDetail : true,
+                    skipLevelOfDetail : true,
+                    loadSiblings : true
+                })
+            );
         }
 
         if(tilesets == null)
@@ -160,7 +173,9 @@ var theApp = (function () {
 
                         setTilesetModelMatrixData(tilesets, latitude, longitude, altitude, heading);
 
-                        var editor = new EDD_CJS.Cesium3dTilesetLocationEditor(viewer, tilesets);
+                        if(EDD_CJS_PUBLIC_AJAX.is_owner) {
+                            var editor = new EDD_CJS.Cesium3dTilesetLocationEditor(viewer, tilesets);
+                        }
 
                     } else {
                         tilesets.modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(Cesium.Cartesian3.fromDegrees(0, 0));
@@ -169,8 +184,8 @@ var theApp = (function () {
             }
 
             cameraController.setDefaultView();
-
-
+        }).otherwise(function(error){
+            window.alert(error);
         });
     }
 
@@ -341,6 +356,7 @@ jQuery(document).ready(function(){
     		    EDD_CJS_PUBLIC_AJAX.download_asset_id = data.download_asset_id;
     		    EDD_CJS_PUBLIC_AJAX.cesium_token = data.cesium_token;
     		    EDD_CJS_PUBLIC_AJAX.view_data = data.view_data;
+                EDD_CJS_PUBLIC_AJAX.post_slug = data.post_slug;
 
     		    var tileset_model_matrix_data = null;
 
@@ -352,8 +368,9 @@ jQuery(document).ready(function(){
                 }
 
                 EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data = tileset_model_matrix_data;
+                EDD_CJS_PUBLIC_AJAX.is_owner = $('#set_tileset_model_matrix_json').is(":visible");
 
-    		    if(tileset_model_matrix_data){
+                if(tileset_model_matrix_data){
                     $('#tileset_latitude').val(tileset_model_matrix_data.latitude);
                     $('#tileset_longitude').val(tileset_model_matrix_data.longitude);
                     $('#tileset_altitude').val(tileset_model_matrix_data.altitude);
