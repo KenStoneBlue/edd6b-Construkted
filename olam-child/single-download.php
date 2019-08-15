@@ -45,7 +45,7 @@ get_header(); ?>
                         $download_asset_id = get_post_meta( get_the_ID(), 'download_asset_id', true );
                         $download_asset_url = get_post_meta( get_the_ID(), 'download_asset_url', true );
 
-                        $display_3dtileset = true;
+                        $display_3dtileset = TRUE;
 
                         //if( !empty($download_asset_id) || !empty($download_asset_url) ){
                         if($display_3dtileset){
