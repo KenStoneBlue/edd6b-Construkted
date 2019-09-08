@@ -1,32 +1,90 @@
 var viewer = null;
 var cameraController = null;
- 
-var theApp = (function () {
 
+var theApp = (function () {
     var tilesets = null;
-    
+    var tilesetLocationEditor = null;
+
     // why?
     // please see wp_content/themes/olam/css/color.css.php
     // it define tbody, th, td,, tfoot 's background color
-    
+
     function applyCesiumCssStyle() {
         var cesiumNavigationHelp = $('.cesium-click-navigation-help.cesium-navigation-help-instructions');
         cesiumNavigationHelp.find("td").css({"background-color": "rgba(38, 38, 38, 0.75)"});
-		var cesiumNavigationHelp = $('.cesium-touch-navigation-help.cesium-navigation-help-instructions');
-        cesiumNavigationHelp.find("td").css({"background-color": "rgba(38, 38, 38, 0.75)"});
+
+		var cesiumTouchNavigationHelp = $('.cesium-touch-navigation-help.cesium-navigation-help-instructions');
+        cesiumTouchNavigationHelp.find("td").css({"background-color": "rgba(38, 38, 38, 0.75)"});
+    }
+
+    function _initGeoLocationWidget() {
+        $('#geo_location_edit_div').hide();
+
+        $('#edit_asset_geo_location_button').click(function () {
+            $('#geo_location_label_div').hide();
+            $('#geo_location_edit_div').show();
+
+            if(cameraController)
+                cameraController.setEnabledFPV(false);
+			if(tilesetLocationEditor)
+            	tilesetLocationEditor.setVisible(true);
+        });
+
+        $('#exit_edit_asset_geo_location_button').click(function () {
+            $('#tileset_latitude_label').html($('#tileset_latitude').val());
+            $('#tileset_longitude_label').html($('#tileset_longitude').val());
+
+            var altitude = $('#tileset_altitude').val();
+            altitude = parseFloat(altitude);
+
+            $('#tileset_altitude_label').html(altitude.toFixed(3) );
+
+            $('#geo_location_label_div').show();
+            $('#geo_location_edit_div').hide();
+
+            if(cameraController)
+                cameraController.setEnabledFPV(true);
+
+            tilesetLocationEditor.setVisible(false);
+        });
+    }
+
+    function _updateGeoLocationWidget() {
+        var tileset_model_matrix_data = EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data;
+
+        if(tileset_model_matrix_data){
+            $('#tileset_latitude').val(tileset_model_matrix_data.latitude);
+            $('#tileset_longitude').val(tileset_model_matrix_data.longitude);
+            $('#tileset_altitude').val(tileset_model_matrix_data.altitude);
+            $('#tileset_heading').val(tileset_model_matrix_data.heading);
+
+            $('#tileset_latitude_label').html(tileset_model_matrix_data.latitude);
+            $('#tileset_longitude_label').html(tileset_model_matrix_data.longitude);
+            $('#tileset_altitude_label').html(tileset_model_matrix_data.altitude.toFixed(3) );
+        }
+        else{
+            $('#tileset_latitude').val(0);
+            $('#tileset_longitude').val(0);
+            $('#tileset_altitude').val(0);
+            $('#tileset_heading').val(0);
+
+            $('#tileset_latitude_label').html(0);
+            $('#tileset_longitude_label').html(0);
+            $('#tileset_altitude_label').html(0);
+        }
     }
 
     function start() {
         $('#exitFPVModeButton').hide();
-        
+
         $('#capture_thumbnail').click(function () {
            captureThumbnail();
         });
-        
+
         $('#save_current_view').click(function () {
            saveCurrentView();
         });
-        
+
         $('#reset_camera_view').click(function () {
             resetCameraView();
         });
@@ -35,6 +93,8 @@ var theApp = (function () {
             setTilesetModelMatrixJson();
         });
 
+        _initGeoLocationWidget();
+        _updateGeoLocationWidget();
         create3DMap();
         applyCesiumCssStyle();
     }
@@ -49,24 +109,24 @@ var theApp = (function () {
             timeline: false,
             fullscreenElement: "cesiumContainer"
         });
-        
+
         //var terrainDisable = EDD_CJS_PUBLIC_AJAX.download_asset_id.length && EDD_CJS_PUBLIC_AJAX.download_asset_id == "32717";
 
         var terrainDisable = true;
 
         if(!terrainDisable)
             viewer.terrainProvider = Cesium.createWorldTerrain();
-        
+
         /* Switch mouse buttons in Cesium viewer:
             - Left button to rotate
             - Right button to pan
             - Wheel to zoom
             - Middle button to zoom
         */
-        
+
         viewer.scene.screenSpaceCameraController.rotateEventTypes = Cesium.CameraEventType.RIGHT_DRAG;
         viewer.scene.screenSpaceCameraController.zoomEventTypes = [Cesium.CameraEventType.MIDDLE_DRAG, Cesium.CameraEventType.WHEEL, Cesium.CameraEventType.PINCH];
-    
+
         viewer.scene.screenSpaceCameraController.tiltEventTypes = [Cesium.CameraEventType.LEFT_DRAG, Cesium.CameraEventType.PINCH, {
                 eventType : Cesium.CameraEventType.LEFT_DRAG,
                 modifier : Cesium.KeyboardEventModifier.CTRL
@@ -77,35 +137,35 @@ var theApp = (function () {
 
         // hide Cesium credit display
         viewer.bottomContainer.style.visibility ="hidden";
-        
+
         // Change the text in the Help menu
-        
+
         $(".cesium-navigation-help-pan").text("Rotate view");
         $(".cesium-navigation-help-zoom").text("Pan view");
         $(".cesium-navigation-help-rotate").text("Zoom view");
-        
+
         var navigationHelpDetailsElements = $(".cesium-navigation-help-details");
-        
+
         for(var i = 0; i < navigationHelpDetailsElements.length; i++) {
             var element = navigationHelpDetailsElements[i];
-            
-            if(element.textContent == "Right click + drag, or") {
+
+            if(element.textContent === "Right click + drag, or") {
                 element.textContent = "Right click + drag";
             }
-            
-            if(element.textContent == "Mouse wheel scroll") {
+
+            if(element.textContent === "Mouse wheel scroll") {
                 element.textContent = "";
             }
-            
-            if(element.textContent == "Middle click + drag, or") {
+
+            if(element.textContent === "Middle click + drag, or") {
                 element.textContent = "Scroll mouse wheel";
             }
-            
-            if(element.textContent == "CTRL + Left/Right click + drag") {
+
+            if(element.textContent === "CTRL + Left/Right click + drag") {
                 element.textContent = "Middle click + drag";
             }
         }
-        
+
         if( EDD_CJS_PUBLIC_AJAX.download_asset_url.length ){
             var cesiumTilesetURL = EDD_CJS_PUBLIC_AJAX.download_asset_url;
 
@@ -161,7 +221,7 @@ var theApp = (function () {
             cameraController = new EDD_CJS.CameraController(options);
 
             //required since the models may not be geographically referenced.
-            
+
             if(tilesets.asset.extras != null) {
                 if (tilesets.asset.extras.ion.georeferenced !== true) {
                     if (EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data) {
@@ -174,13 +234,21 @@ var theApp = (function () {
                         setTilesetModelMatrixData(tilesets, latitude, longitude, altitude, heading);
 
                         if(EDD_CJS_PUBLIC_AJAX.is_owner) {
-                            var editor = new EDD_CJS.Cesium3dTilesetLocationEditor(viewer, tilesets);
+                            tilesetLocationEditor = new EDD_CJS.Cesium3dTilesetLocationEditor(viewer, tilesets);
+
+                            tilesetLocationEditor.setVisible(false);
                         }
 
                     } else {
                         tilesets.modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(Cesium.Cartesian3.fromDegrees(0, 0));
                     }
                 }
+            }
+
+            if(EDD_CJS_PUBLIC_AJAX.is_owner) {
+                tilesetLocationEditor = new EDD_CJS.Cesium3dTilesetLocationEditor(viewer, tilesets);
+
+                tilesetLocationEditor.setVisible(false);
             }
 
             cameraController.setDefaultView();
@@ -200,12 +268,12 @@ var theApp = (function () {
 
         tilesets.modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(center, hpr);
     }
-    
+
     function captureThumbnail() {
         viewer.render();
-        
+
         var mediumQuality  = viewer.canvas.toDataURL('image/jpeg', 0.5);
-        
+
         $.ajax({
     		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
     		type : 'post',
@@ -222,7 +290,7 @@ var theApp = (function () {
     		}
 	    });
     }
-    
+
     function saveCurrentView() {
         $.ajax({
     		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
@@ -240,7 +308,7 @@ var theApp = (function () {
     		}
         });
     }
-    
+
     function resetCameraView() {
          $.ajax({
     		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
@@ -338,7 +406,7 @@ var theApp = (function () {
 
 jQuery(document).ready(function(){
     console.log(EDD_CJS_PUBLIC_AJAX);
-    
+
     $.ajax({
     		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
     		type : 'post',
@@ -349,9 +417,9 @@ jQuery(document).ready(function(){
     		success : function( response ) {
     		    // I am not sure why?
     		    var json_string = response.substring(0, response.length - 1);
-    		    
+
     		    var data = JSON.parse(json_string);
-    		    
+
     		    EDD_CJS_PUBLIC_AJAX.download_asset_url = data.download_asset_url;
     		    EDD_CJS_PUBLIC_AJAX.download_asset_id = data.download_asset_id;
     		    EDD_CJS_PUBLIC_AJAX.cesium_token = data.cesium_token;
@@ -368,20 +436,7 @@ jQuery(document).ready(function(){
                 }
 
                 EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data = tileset_model_matrix_data;
-                EDD_CJS_PUBLIC_AJAX.is_owner = $('#set_tileset_model_matrix_json').is(":visible");
-
-                if(tileset_model_matrix_data){
-                    $('#tileset_latitude').val(tileset_model_matrix_data.latitude);
-                    $('#tileset_longitude').val(tileset_model_matrix_data.longitude);
-                    $('#tileset_altitude').val(tileset_model_matrix_data.altitude);
-                    $('#tileset_heading').val(tileset_model_matrix_data.heading);
-                }
-    		    else{
-                    $('#tileset_latitude').val(0);
-                    $('#tileset_longitude').val(0);
-                    $('#tileset_altitude').val(0);
-                    $('#tileset_heading').val(0);
-                }
+                EDD_CJS_PUBLIC_AJAX.is_owner = data.is_owner;
 
     			theApp.start();
     		},

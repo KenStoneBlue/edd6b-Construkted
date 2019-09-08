@@ -41,8 +41,8 @@ class EDD_CJS_Scripts {
             //if( !empty($download_asset_id) || !empty($download_asset_url) ){
             if($display_3dtileset ){
         		// add css for check code in public
-        		wp_enqueue_style( 'edd-cjs-cesium-widgets-style',  'https://cesiumjs.org/releases/1.59/Build/Cesium/Widgets/widgets.css', array(), EDD_CJS_LIB_VER );
-                wp_enqueue_script('edd-cjs-cesium-script', 'https://cesiumjs.org/releases/1.59/Build/Cesium/Cesium.js', array('jquery'), EDD_CJS_LIB_VER, true);
+        		wp_enqueue_style( 'edd-cjs-cesium-widgets-style',  'https://cesiumjs.org/releases/1.61/Build/Cesium/Widgets/widgets.css', array(), EDD_CJS_LIB_VER );
+                wp_enqueue_script('edd-cjs-cesium-script', 'https://cesiumjs.org/releases/1.61/Build/Cesium/Cesium.js', array('jquery'), EDD_CJS_LIB_VER, true);
 
                 $script_dir = '/wp-content/plugins/edd-cesiumjs-customize.1.0.4/includes/js/';
 

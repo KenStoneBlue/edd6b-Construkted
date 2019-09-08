@@ -27,6 +27,23 @@ Version: 1.0.1
 
 .page-head {margin-bottom: 2.0rem;}  /* was 3.6rem  */
 
+
+/*geo location widget*/
+
+#edit_asset_geo_location_button{
+    margin-top: 30px;
+}
+
+#set_tileset_model_matrix_json{
+    margin: 0 10px 0 0 ;
+}
+
+#exit_edit_asset_geo_location_button{
+    width: 65px;
+}
+
+
+
 /****************************************************************/
 /****************************************************************/
 /****************************************************************/

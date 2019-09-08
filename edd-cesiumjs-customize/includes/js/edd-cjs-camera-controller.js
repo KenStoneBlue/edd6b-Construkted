@@ -36,6 +36,7 @@ EDD_CJS.CameraController = (function () {
         this._walkingSpeed = HUMAN_WALKING_SPEED;
 
         this._main3dTileset = options.main3dTileset;
+        this._enabledFPV = true;
 
         /**
          * heading: angle with up direction
@@ -178,7 +179,7 @@ EDD_CJS.CameraController = (function () {
         this._mousePosition = this._startMousePosition = Cesium.Cartesian3.clone(movement.position);
     };
 
-    CameraController.prototype._onMouseLButtonDoubleClicked = function (movement) {
+    CameraController.prototype._enterFPV1 = function(movement) {
         var position = this._cesiumViewer.scene.pickPosition(movement.position);
 
         if(position === undefined)
@@ -211,7 +212,51 @@ EDD_CJS.CameraController = (function () {
         if(!this._enabled)
             this._enable(cartographic);
 
+        this._camera.flyTo({
+            destination : globe.ellipsoid.cartographicToCartesian(cartographic),
+            orientation : {
+                heading : this._camera.heading,
+                pitch :  0,
+                roll : 0.0
+            }
+        });
+    };
 
+    CameraController.prototype._enterFPV2 = function(movement) {
+        var scene = this._cesiumViewer.scene;
+
+        scene.globe.depthTestAgainstTerrain = true;
+
+        var pickRay = scene.camera.getPickRay(movement.position);
+
+        var result = scene.pickFromRay(pickRay);
+
+        if(!result)
+        {
+            alert("Unfortunately failed to enter FPV!");
+            return;
+        }
+
+        var globe = this._cesiumViewer.scene.globe;
+        var cartographic = globe.ellipsoid.cartesianToCartographic(result.position);
+
+        // consider terrain height
+        var terrainHeight = globe.getHeight(cartographic);
+
+        // determine we clicked out of main 3d tileset
+        if (Cesium.Math.equalsEpsilon(cartographic.height, terrainHeight, Cesium.Math.EPSILON4, Cesium.Math.EPSILON1))
+            return;
+
+        // I am not sure why negative
+        if (cartographic.height < 0) {
+            console.warn("height is negative");
+            return;
+        }
+
+        cartographic.height = cartographic.height + HUMAN_EYE_HEIGHT;
+
+        if(!this._enabled)
+            this._enable(cartographic);
 
         this._camera.flyTo({
             destination : globe.ellipsoid.cartographicToCartesian(cartographic),
@@ -221,6 +266,15 @@ EDD_CJS.CameraController = (function () {
                 roll : 0.0
             }
         });
+    };
+
+    CameraController.prototype._onMouseLButtonDoubleClicked = function (movement) {
+        if(!this._enabledFPV)
+            return;
+
+        //this._enterFPV1(movement);
+
+        this._enterFPV2(movement);
     };
 
     CameraController.prototype._onMouseMove = function (movement) {
@@ -467,6 +521,10 @@ EDD_CJS.CameraController = (function () {
             //     console.log(error);
             // });
         }
+    };
+
+    CameraController.prototype.setEnabledFPV = function(value) {
+        this._enabledFPV = value;
     };
 
     return CameraController;

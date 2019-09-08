@@ -204,38 +204,61 @@ class geolocation_editor extends WP_Widget {
     /** @see WP_Widget::widget -- do not rename this */
     function widget($args, $instance) {	
         extract( $args );
-        $title 		= apply_filters('widget_title', $instance['title']);
-        $message 	= $instance['message'];
+        $title = apply_filters('widget_title', $instance['title']);
+
+        if($post->post_author != get_current_user_id())
+            $title = "GEO-LOCATION";
+
+        $message = $instance['message'];
         ?>
               <?php echo $before_widget; ?>
                   <?php if ( $title )
                         echo $before_title . $title . $after_title; ?>
- 							<ul>
-								<li>Lat: <input type="text" id ="tileset_latitude" size="15"/></li>
-								<li>Lon: <input type="text" id="tileset_longitude" size="15"/></li>
-								<li>Alt: <input type="text" id="tileset_altitude" size="15"/></li>
-								<li>Heading: <input type="text" id="tileset_heading" size="15"/></li>
+                            <div id = "geo_location_label_div">
+                                Latitude:  <span id = "tileset_latitude_label"></span>  </br>
+                                Longitude: <span id = "tileset_longitude_label"></span>  </br>
+                                Altitude:  <span id = "tileset_altitude_label"> </span>
 
                                 <?php
                                     global $post;
 
                                     if($post->post_author == get_current_user_id())
-								        echo '<li><button id = "set_tileset_model_matrix_json">Save Geo-Location</button></li>';
+                                        echo '<button id = "edit_asset_geo_location_button">Edit Asset Geo-Location</button>';
                                 ?>
-							</ul>
+                            </div>
+
+                            <div id = "geo_location_edit_div" style="display: none">
+                                <ul>
+                                    <li>Lat: <input type="text" id ="tileset_latitude" size="15"/></li>
+                                    <li>Lon: <input type="text" id="tileset_longitude" size="15"/></li>
+                                    <li>Alt: <input type="text" id="tileset_altitude" size="15"/></li>
+                                    <li>Heading: <input type="text" id="tileset_heading" size="15"/></li>
+                                </ul>
+                                <button id = "set_tileset_model_matrix_json">Save Geo-Location</button>
+                                <button id = "exit_edit_asset_geo_location_button">Exit</button>
+                            </div>
+
               <?php echo $after_widget; ?>
         <?php
     }
- 
-    /** @see WP_Widget::update -- do not rename this */
+
+    /** @param $new_instance
+     * @param $old_instance
+     * @return mixed
+     * @see WP_Widget::update -- do not rename this
+     */
     function update($new_instance, $old_instance) {		
 		$instance = $old_instance;
 		$instance['title'] = strip_tags($new_instance['title']);
 
         return $instance;
     }
- 
-    /** @see WP_Widget::form -- do not rename this */
+
+    // visual elements of the widget for the Edit / Admin interface,
+
+    /** @param $instance
+     * @see WP_Widget::form -- do not rename this
+     */
     function form($instance) {	
         $title 		= esc_attr($instance['title']);
         $message	= esc_attr($instance['message']);
@@ -389,6 +412,11 @@ function get_post_data() {
     $data->view_data = $view_data;
     $data->tileset_model_matrix_json = $tileset_model_matrix_json;
     $data->post_slug = $post_slug;
+
+    if($post->post_author != get_current_user_id())
+        $data->is_owner = true;
+    else
+        $data->is_owner = false;
     
     $json = json_encode($data);
     

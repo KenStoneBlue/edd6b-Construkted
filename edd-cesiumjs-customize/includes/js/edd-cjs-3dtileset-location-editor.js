@@ -33,6 +33,8 @@ EDD_CJS.Cesium3dTilesetLocationEditor = (function () {
         this._createAxesEntities();
         this._initEventHandlers();
         this._update(this._tileset.modelMatrix);
+
+        this._visible = true;
     }
 
     _.prototype._disableDefaultCameraController = function () {
@@ -65,14 +67,23 @@ EDD_CJS.Cesium3dTilesetLocationEditor = (function () {
         var self = this;
 
         this._screenSpaceHandler.setInputAction(function(movement) {
+            if(!self._visible)
+                return;
+
             self._onScreeSpaceLeftDown(movement);
         }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
 
         this._screenSpaceHandler.setInputAction(function(movement) {
+            if(!self._visible)
+                return;
+
             self._onScreeSpaceMove(movement);
         }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
         this._screenSpaceHandler.setInputAction(function(movement) {
+            if(!self._visible)
+                return;
+
             self._onScreeSpaceLeftUp(movement);
         }, Cesium.ScreenSpaceEventType.LEFT_UP);
 
@@ -396,6 +407,15 @@ EDD_CJS.Cesium3dTilesetLocationEditor = (function () {
                 material : new Cesium.PolylineArrowMaterialProperty(Cesium.Color.BLUE)
             }
         });
+    };
+
+    _.prototype.setVisible = function(visible)
+    {
+        this._visible = visible;
+
+        this._xAxisEntity.show = visible;
+        this._yAxisEntity.show = visible;
+        this._zAxisEntity.show = visible;
     };
 
     return _;
