@@ -3,7 +3,7 @@
  * Plugin Name: EDD CesiumJS Customize
  * Plugin URI: http://www.construkted.com/
  * Description: EDD CesiumJS Customize
- * Version: 1.0.4
+ * Version: 1.0.6
  * Author: Construkted Team
  * Author URI: http://www.construkted.com/
  * Text Domain: edd_cjs
@@ -34,6 +34,13 @@
  * - Added load speed optimizations as suggested by Omar
  * - Modified keyboard key assignments, so "A" and "D" move the camera rather then rotate it.
  * 
+ * 1.0.5
+ * - Remove the CDATA tags that appear in the html source for the asset pages
+ * - Background terrain is not showing up anymore
+ *
+ * * 1.0.5
+ * - Bug Fixes, Project 20
+ * - 
  */
 
 // Exit if accessed directly
