@@ -23,12 +23,12 @@
  * 1.0.2
  * - Moved all settings to one common page Settings>Contrukted
  *
- *1.0.3
+ * 1.0.3
  * - Added extra FES hidden field:
  *      field : default_camera_position_direction
  *      This field stores the camera position and view direction, and it becomes the default position and direction when a model is loaded
  *
- *1.0.4
+ * 1.0.4
  * - Added random characters as item slug. (length of 10)
  * - Added a hyphen between slug and file name when file gets renamed before sending to S3
  * - Added load speed optimizations as suggested by Omar
@@ -38,7 +38,7 @@
  * - Remove the CDATA tags that appear in the html source for the asset pages
  * - Background terrain is not showing up anymore
  *
- * * 1.0.5
+ * 1.0.6
  * - Bug Fixes, Project 20
  * - 
  */
