@@ -207,8 +207,10 @@ var theApp = (function () {
         if(tilesets == null)
             return;
 
-// Model level of detail // Default is 16
-        tilesets.maximumScreenSpaceError = 16.0;
+// Model level of detail 
+        tilesets.maximumScreenSpaceError = 16.0; // Default is 16
+        
+        tilesets.maximumMemoryUsage = 512; // Default is 512
         
 // Point cloud point size
         tilesets.pointCloudShading.attenuation = true;
