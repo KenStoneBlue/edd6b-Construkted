@@ -191,7 +191,7 @@ var theApp = (function () {
         } else {
             Cesium.Ion.defaultAccessToken = EDD_CJS_PUBLIC_AJAX.cesium_token;
 
-            var tilesetURLInOtherServer = "https://18.216.24.61/3DTileServer/index.php/asset/" +  EDD_CJS_PUBLIC_AJAX.post_slug + "/tileset.json";
+            var tilesetURLInOtherServer = "http://assets01.construkted.com/3DTileServer/index.php/asset/" +  EDD_CJS_PUBLIC_AJAX.post_slug + "/tileset.json";
 
             tilesets = viewer.scene.primitives.add(
                 new Cesium.Cesium3DTileset({
@@ -205,6 +205,14 @@ var theApp = (function () {
 
         if(tilesets == null)
             return;
+
+// Model level of detail // Default is 16
+        tilesets.maximumScreenSpaceError = 16.0;
+        
+// Point cloud point size
+        tilesets.pointCloudShading.attenuation = true;
+        tilesets.pointCloudShading.maximumAttenuation = 5;
+        
 
         tilesets.readyPromise.then(function(){
             var options = {
