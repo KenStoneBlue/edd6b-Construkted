@@ -107,7 +107,8 @@ var theApp = (function () {
             geocoder: false,
             sceneModePicker: false,
             timeline: false,
-            fullscreenElement: "cesiumContainer"
+            fullscreenElement: "cesiumContainer",
+	    requestRenderMode : true
         });
 
         //var terrainDisable = EDD_CJS_PUBLIC_AJAX.download_asset_id.length && EDD_CJS_PUBLIC_AJAX.download_asset_id == "32717";
