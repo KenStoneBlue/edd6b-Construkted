@@ -58,8 +58,8 @@ var theApp = (function () {
             $('#tileset_altitude').val(tileset_model_matrix_data.altitude);
             $('#tileset_heading').val(tileset_model_matrix_data.heading);
 
-            $('#tileset_latitude_label').html(tileset_model_matrix_data.latitude);
-            $('#tileset_longitude_label').html(tileset_model_matrix_data.longitude);
+            $('#tileset_latitude_label').html(tileset_model_matrix_data.latitude.toFixed(8));
+            $('#tileset_longitude_label').html(tileset_model_matrix_data.longitude.toFixed(8));
             $('#tileset_altitude_label').html(tileset_model_matrix_data.altitude.toFixed(3) );
         }
         else{
