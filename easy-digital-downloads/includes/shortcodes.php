@@ -580,8 +580,17 @@ function edd_downloads_query( $atts, $content = null ) {
 		$query['paged'] = get_query_var('paged');
 	else if ( get_query_var( 'page' ) )
 		$query['paged'] = get_query_var( 'page' );
-	else
-		$query['paged'] = 1;
+	else {
+        global $wp;
+
+        $request = $wp->request;
+        $params = explode("/", $request);
+        $page = $params[count($params) - 1];
+
+        $query['paged'] = $page;
+
+        // $query['paged'] = 1;
+    }
 
 	// Allow the query to be manipulated by other plugins
 	$query = apply_filters( 'edd_downloads_query', $query, $atts );
