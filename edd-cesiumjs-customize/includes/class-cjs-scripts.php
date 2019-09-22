@@ -44,7 +44,7 @@ class EDD_CJS_Scripts {
         		wp_enqueue_style( 'edd-cjs-cesium-widgets-style',  'https://cesiumjs.org/releases/1.61/Build/Cesium/Widgets/widgets.css', array(), EDD_CJS_LIB_VER );
                 wp_enqueue_script('edd-cjs-cesium-script', 'https://cesiumjs.org/releases/1.61/Build/Cesium/Cesium.js', array('jquery'), EDD_CJS_LIB_VER, true);
 
-                $script_dir = '/wp-content/plugins/edd-cesiumjs-customize.1.0.4/includes/js/';
+                $script_dir = '/wp-content/plugins/edd-cesiumjs-customize/includes/js/';
 
                 wp_enqueue_script('edd-cjs-camera-controller-script',  $script_dir . 'edd-cjs-camera-controller.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
                 wp_enqueue_script('edd-cjs-3dtileset-location-editor-script', $script_dir . 'edd-cjs-3dtileset-location-editor.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);

@@ -41,6 +41,9 @@
  * 1.0.6
  * - Bug Fixes, Project 20
  * - 
+ *
+ * 1.0.7
+ *
  */
 
 // Exit if accessed directly
@@ -161,6 +164,15 @@ class asset_editor extends WP_Widget {
         $title 		= apply_filters('widget_title', $instance['title']);
         $message 	= $instance['message'];
         ?>
+		
+		<?php
+            global $post;
+            setup_postdata( $post );
+
+            if($post->post_author != get_current_user_id())
+                return;
+        ?>
+		
               <?php echo $before_widget; ?>
                   <?php if ( $title )
                         echo $before_title . $title . $after_title; ?>
@@ -359,11 +371,13 @@ function post_set_thumbnail() {
     $ret = update_post_meta( $post_id, '_thumbnail_id', $attach_id ); 
     
     if($ret == true) {
-        echo "successfully update thumbnail";
+        echo "successfully update thumbnail!";
     }
     else {
-        echo "failed to update thumbnail";
+        echo "failed to update thumbnail!";
     }
+	
+	wp_die();
 }
 
 add_action( 'wp_ajax_nopriv_post_set_current_view', 'post_set_current_view' );
@@ -380,6 +394,8 @@ function post_set_current_view() {
      else {
         echo "failed to updated!";
      }
+	 
+	 wp_die();
 }
 
 add_action( 'wp_ajax_nopriv_post_reset_current_view', 'post_reset_current_view' );
@@ -395,6 +411,8 @@ function post_reset_current_view() {
      else {
         echo "failed to updated!";
      }
+	 
+	 wp_die();
 }
 
 add_action( 'wp_ajax_nopriv_get_post_data', 'get_post_data' );
