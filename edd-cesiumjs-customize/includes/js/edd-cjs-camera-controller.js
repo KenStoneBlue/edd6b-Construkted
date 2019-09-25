@@ -14,7 +14,7 @@ EDD_CJS.CameraController = (function () {
     var HEADING_DIRECTION_LEFT = 1;
     var HEADING_DIRECTION_RIGHT = 2;
 
-    var HUMAN_WALKING_SPEED = 0.5;
+    var DEFAULT_HUMAN_WALKING_SPEED = 0.5;
 
     var MAX_PITCH_IN_DEGREE = 88;
     var ROTATE_SPEED = -5;
@@ -33,7 +33,6 @@ EDD_CJS.CameraController = (function () {
 
         this._direction = DIRECTION_NONE;
         this._headingDirection = HEADING_DIRECTION_NONE;
-        this._walkingSpeed = HUMAN_WALKING_SPEED;
 
         this._main3dTileset = options.main3dTileset;
         this._enabledFPV = true;
@@ -46,6 +45,8 @@ EDD_CJS.CameraController = (function () {
 
         // indicate if heading and pitch is changed
         this._isMouseLeftButtonPressed = false;
+
+        this._frameMonitor = Cesium.FrameRateMonitor.fromScene(this._cesiumViewer.scene);
 
         this._init();
 
@@ -368,7 +369,7 @@ EDD_CJS.CameraController = (function () {
         else if(this._direction === DIRECTION_RIGHT)
             Cesium.Cartesian3.multiplyByScalar(this._camera.right, 1, direction);
 
-        var stepDistance = this._walkingSpeed * dt;
+        var stepDistance = this._walkingSpeed() * dt;
 
         var deltaPosition = Cesium.Cartesian3.multiplyByScalar(direction, stepDistance, new Cesium.Cartesian3());
 
@@ -525,6 +526,20 @@ EDD_CJS.CameraController = (function () {
 
     CameraController.prototype.setEnabledFPV = function(value) {
         this._enabledFPV = value;
+    };
+
+    CameraController.prototype._walkingSpeed = function() {
+        var lastFPS = this._frameMonitor.lastFramesPerSecond;
+
+        var defaultWorkingSpeed = DEFAULT_HUMAN_WALKING_SPEED;
+
+        if(lastFPS === undefined) {
+            return defaultWorkingSpeed;
+        }
+
+        var factor = 30;
+
+        return defaultWorkingSpeed * factor / lastFPS;
     };
 
     return CameraController;

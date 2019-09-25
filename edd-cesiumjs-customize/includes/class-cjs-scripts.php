@@ -48,11 +48,13 @@ class EDD_CJS_Scripts {
 
                 wp_enqueue_script('edd-cjs-camera-controller-script',  $script_dir . 'edd-cjs-camera-controller.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
                 wp_enqueue_script('edd-cjs-3dtileset-location-editor-script', $script_dir . 'edd-cjs-3dtileset-location-editor.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
+                wp_enqueue_script('edd-cjs-measurer-script', $script_dir . 'edd-cjs-measurer.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
             
     			wp_register_script('edd-cjs-public-script', EDD_CJS_INC_URL . '/js/edd-cjs-public-script.js',
                                    array('jquery',
                                           'edd-cjs-camera-controller-script',
                                           'edd-cjs-3dtileset-location-editor-script',
+                                          'edd-cjs-measurer-script',
                                           'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
 
                 wp_enqueue_script('edd-cjs-public-script');

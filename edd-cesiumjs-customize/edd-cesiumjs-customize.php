@@ -3,7 +3,7 @@
  * Plugin Name: EDD CesiumJS Customize
  * Plugin URI: http://www.construkted.com/
  * Description: EDD CesiumJS Customize
- * Version: 1.0.6
+ * Version: 1.0.7
  * Author: Construkted Team
  * Author URI: http://www.construkted.com/
  * Text Domain: edd_cjs
@@ -40,9 +40,10 @@
  *
  * 1.0.6
  * - Bug Fixes, Project 20
- * - 
  *
  * 1.0.7
+ * -
+ * - 
  *
  */
 
@@ -164,15 +165,15 @@ class asset_editor extends WP_Widget {
         $title 		= apply_filters('widget_title', $instance['title']);
         $message 	= $instance['message'];
         ?>
-		
-		<?php
+
+        <?php
             global $post;
             setup_postdata( $post );
 
             if($post->post_author != get_current_user_id())
                 return;
         ?>
-		
+
               <?php echo $before_widget; ?>
                   <?php if ( $title )
                         echo $before_title . $title . $after_title; ?>
@@ -209,6 +210,70 @@ class asset_editor extends WP_Widget {
 add_action('widgets_init', create_function('', 'return register_widget("asset_editor");'));
 /**
  * Asset Editor Widget End
+ */
+
+/**
+ * Measurement Tools Widget
+ */
+class measurement_tools extends WP_Widget {
+     /** constructor -- name this the same as the class above */
+    function measurement_tools() {
+        parent::WP_Widget(false, $name = 'Measurement Tools');
+    }
+
+    /** @see WP_Widget::widget -- do not rename this */
+    function widget($args, $instance) {
+        extract( $args );
+        $title 		= apply_filters('widget_title', $instance['title']);
+        $message 	= $instance['message'];
+        ?>
+
+            <?php echo $before_widget; ?>
+              <?php if ( $title )
+                    echo $before_title . $title . $after_title; ?>
+                        <div id = "measurement_tools">
+                            <ul>
+                                <li><input type="checkbox" id ="measurement_distance_checkbox" />  Distance</li>
+                            </ul>
+
+                        </div>
+
+                 		<div id = "measurement_tools_distance_result"  style="display: none">
+                 		    Measured Distances:</br>
+
+                            Pnt to Pnt Dist: <span id ="measurement_tools_distance"> </span> </br>
+                            X Projection: <span id = "measurement_tools_distance_x"> </span> </br>
+                            Y Projection: <span id = "measurement_tools_distance_y"> </span> </br>
+                            Z Projection: <span id = "measurement_tools_distance_z"> </span>
+                        </div>
+            <?php echo $after_widget; ?>
+        <?php
+    }
+
+    /** @see WP_Widget::update -- do not rename this */
+    function update($new_instance, $old_instance) {
+		$instance = $old_instance;
+		$instance['title'] = strip_tags($new_instance['title']);
+
+        return $instance;
+    }
+
+    /** @see WP_Widget::form -- do not rename this */
+    function form($instance) {
+        $title 		= esc_attr($instance['title']);
+        $message	= esc_attr($instance['message']);
+        ?>
+         <p>
+          <label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?></label>
+          <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" />
+        </p>
+        <?php
+    }
+} // end class asset_editor
+
+add_action('widgets_init', create_function('', 'return register_widget("measurement_tools");'));
+/**
+ * Measurement Tools Widget End
  */
 
 /**
@@ -376,8 +441,8 @@ function post_set_thumbnail() {
     else {
         echo "failed to update thumbnail!";
     }
-	
-	wp_die();
+
+    wp_die();
 }
 
 add_action( 'wp_ajax_nopriv_post_set_current_view', 'post_set_current_view' );
@@ -392,10 +457,10 @@ function post_set_current_view() {
      if($ret == true) 
          echo "successfully updated!";
      else {
-        echo "failed to updated!";
+         echo "failed to updated!";
      }
-	 
-	 wp_die();
+
+     wp_die();
 }
 
 add_action( 'wp_ajax_nopriv_post_reset_current_view', 'post_reset_current_view' );
@@ -409,10 +474,10 @@ function post_reset_current_view() {
      if($ret == true) 
          echo "successfully updated!";
      else {
-        echo "failed to updated!";
+         echo "failed to updated!";
      }
-	 
-	 wp_die();
+
+     wp_die();
 }
 
 add_action( 'wp_ajax_nopriv_get_post_data', 'get_post_data' );

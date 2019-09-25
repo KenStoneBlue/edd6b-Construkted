@@ -4,6 +4,7 @@ var cameraController = null;
 var theApp = (function () {
     var tilesets = null;
     var tilesetLocationEditor = null;
+    var measurer = null;
 
     // why?
     // please see wp_content/themes/olam/css/color.css.php
@@ -31,6 +32,7 @@ var theApp = (function () {
         });
 
         $('#exit_edit_asset_geo_location_button').click(function () {
+
             $('#tileset_latitude_label').html($('#tileset_latitude').val());
             $('#tileset_longitude_label').html($('#tileset_longitude').val());
 
@@ -46,6 +48,26 @@ var theApp = (function () {
                 cameraController.setEnabledFPV(true);
 
             tilesetLocationEditor.setVisible(false);
+        });
+    }
+    
+    function _initMeasureToolsWidget() {
+        $('#measurement_distance_checkbox').click(function () {
+            var state = $('#measurement_distance_checkbox').is(':checked');
+
+            if(state) {
+                measurer.start();
+                $('#measurement_tools_distance_result').show();
+
+                $('#measurement_tools_distance').html("");
+                $('#measurement_tools_distance_x').html("");
+                $('#measurement_tools_distance_y').html("");
+                $('#measurement_tools_distance_z').html("");
+            }
+            else{
+                measurer.stop();
+                $('#measurement_tools_distance_result').hide();
+            }
         });
     }
 
@@ -94,6 +116,7 @@ var theApp = (function () {
         });
 
         _initGeoLocationWidget();
+        _initMeasureToolsWidget();
         _updateGeoLocationWidget();
         create3DMap();
         applyCesiumCssStyle();
@@ -108,7 +131,7 @@ var theApp = (function () {
             sceneModePicker: false,
             timeline: false,
             fullscreenElement: "cesiumContainer",
-	    requestRenderMode : true
+            requestRenderMode : true
         });
 
         //var terrainDisable = EDD_CJS_PUBLIC_AJAX.download_asset_id.length && EDD_CJS_PUBLIC_AJAX.download_asset_id == "32717";
@@ -208,14 +231,14 @@ var theApp = (function () {
             return;
 
 // Model level of detail 
-        tilesets.maximumScreenSpaceError = 16.0; // Default is 16
-        
+        tilesets.maximumScreenSpaceError = 8.0; // Default is 16
         tilesets.maximumMemoryUsage = 512; // Default is 512
         
 // Point cloud point size
         tilesets.pointCloudShading.attenuation = true;
         tilesets.pointCloudShading.maximumAttenuation = 5;
         
+        viewer.scene.debugShowFramesPerSecond = true;
 
         tilesets.readyPromise.then(function(){
             var options = {
@@ -230,6 +253,11 @@ var theApp = (function () {
             options.main3dTileset = tilesets;
 
             cameraController = new EDD_CJS.CameraController(options);
+
+            measurer = new EDD_CJS.Measurer({
+                cesiumViewer: viewer,
+                tileset: tilesets
+            });
 
             //required since the models may not be geographically referenced.
 
@@ -281,6 +309,7 @@ var theApp = (function () {
     }
 
     function captureThumbnail() {
+        viewer.scene.requestRender();
         viewer.render();
 
         var mediumQuality  = viewer.canvas.toDataURL('image/jpeg', 0.5);
