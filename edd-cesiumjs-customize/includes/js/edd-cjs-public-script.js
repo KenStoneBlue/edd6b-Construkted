@@ -5,6 +5,7 @@ var theApp = (function () {
     var tilesets = null;
     var tilesetLocationEditor = null;
     var measurer = null;
+    var clippingTool = null;
 
     // why?
     // please see wp_content/themes/olam/css/color.css.php
@@ -14,7 +15,7 @@ var theApp = (function () {
         var cesiumNavigationHelp = $('.cesium-click-navigation-help.cesium-navigation-help-instructions');
         cesiumNavigationHelp.find("td").css({"background-color": "rgba(38, 38, 38, 0.75)"});
 
-		var cesiumTouchNavigationHelp = $('.cesium-touch-navigation-help.cesium-navigation-help-instructions');
+        var cesiumTouchNavigationHelp = $('.cesium-touch-navigation-help.cesium-navigation-help-instructions');
         cesiumTouchNavigationHelp.find("td").css({"background-color": "rgba(38, 38, 38, 0.75)"});
     }
 
@@ -27,8 +28,8 @@ var theApp = (function () {
 
             if(cameraController)
                 cameraController.setEnabledFPV(false);
-			if(tilesetLocationEditor)
-            	tilesetLocationEditor.setVisible(true);
+            if(tilesetLocationEditor)
+                tilesetLocationEditor.setVisible(true);
         });
 
         $('#exit_edit_asset_geo_location_button').click(function () {
@@ -50,12 +51,20 @@ var theApp = (function () {
             tilesetLocationEditor.setVisible(false);
         });
     }
-    
-    function _initMeasureToolsWidget() {
-        $('#measurement_distance_checkbox').click(function () {
-            var state = $('#measurement_distance_checkbox').is(':checked');
 
-            if(state) {
+    function _initMeasureToolsWidget() {
+        var measurementDistanceState;
+        var clippingToolState;
+
+        var JQueryElemMeasurementDistanceCheckbox = $('#measurement_distance_checkbox');
+        var JQueryElemClippingToolCheckbox = $('#clipping_tool_checkbox');
+
+        $('#measurement_distance_checkbox').click(function () {
+            measurementDistanceState = $('#measurement_distance_checkbox').is(':checked');
+
+            if(measurementDistanceState) {
+                JQueryElemClippingToolCheckbox.prop("disabled", true);
+
                 measurer.start();
                 $('#measurement_tools_distance_result').show();
 
@@ -63,10 +72,32 @@ var theApp = (function () {
                 $('#measurement_tools_distance_x').html("");
                 $('#measurement_tools_distance_y').html("");
                 $('#measurement_tools_distance_z').html("");
+
+                measurer.lineSegmentCalculated().addEventListener(function(dist, x, y, z) {
+                    $('#measurement_tools_distance').html(dist.toFixed(3) + "m");
+                    $('#measurement_tools_distance_x').html(x.toFixed(3) + "m");
+                    $('#measurement_tools_distance_y').html(y.toFixed(3) + "m");
+                    $('#measurement_tools_distance_z').html(z.toFixed(3) + "m");
+                });
             }
             else{
                 measurer.stop();
                 $('#measurement_tools_distance_result').hide();
+
+                JQueryElemClippingToolCheckbox.prop("disabled", false);
+            }
+        });
+
+        $('#clipping_tool_checkbox').click(function () {
+            clippingToolState = $('#clipping_tool_checkbox').is(':checked');
+
+            if(clippingToolState) {
+                JQueryElemMeasurementDistanceCheckbox.prop("disabled", true);
+                clippingTool.start();
+            }
+            else{
+                clippingTool.stop();
+                JQueryElemMeasurementDistanceCheckbox.prop("disabled", false);
             }
         });
     }
@@ -100,11 +131,11 @@ var theApp = (function () {
         $('#exitFPVModeButton').hide();
 
         $('#capture_thumbnail').click(function () {
-           captureThumbnail();
+            captureThumbnail();
         });
 
         $('#save_current_view').click(function () {
-           saveCurrentView();
+            saveCurrentView();
         });
 
         $('#reset_camera_view').click(function () {
@@ -152,12 +183,12 @@ var theApp = (function () {
         viewer.scene.screenSpaceCameraController.zoomEventTypes = [Cesium.CameraEventType.MIDDLE_DRAG, Cesium.CameraEventType.WHEEL, Cesium.CameraEventType.PINCH];
 
         viewer.scene.screenSpaceCameraController.tiltEventTypes = [Cesium.CameraEventType.LEFT_DRAG, Cesium.CameraEventType.PINCH, {
-                eventType : Cesium.CameraEventType.LEFT_DRAG,
-                modifier : Cesium.KeyboardEventModifier.CTRL
-            }, {
-                eventType : Cesium.CameraEventType.RIGHT_DRAG,
-                modifier : Cesium.KeyboardEventModifier.CTRL
-            }];
+            eventType : Cesium.CameraEventType.LEFT_DRAG,
+            modifier : Cesium.KeyboardEventModifier.CTRL
+        }, {
+            eventType : Cesium.CameraEventType.RIGHT_DRAG,
+            modifier : Cesium.KeyboardEventModifier.CTRL
+        }];
 
         // hide Cesium credit display
         viewer.bottomContainer.style.visibility ="hidden";
@@ -230,14 +261,14 @@ var theApp = (function () {
         if(tilesets == null)
             return;
 
-// Model level of detail 
+// Model level of detail
         tilesets.maximumScreenSpaceError = 8.0; // Default is 16
         tilesets.maximumMemoryUsage = 512; // Default is 512
-        
+
 // Point cloud point size
         tilesets.pointCloudShading.attenuation = true;
         tilesets.pointCloudShading.maximumAttenuation = 5;
-        
+
         viewer.scene.debugShowFramesPerSecond = true;
 
         tilesets.readyPromise.then(function(){
@@ -254,7 +285,12 @@ var theApp = (function () {
 
             cameraController = new EDD_CJS.CameraController(options);
 
-            measurer = new EDD_CJS.Measurer({
+            measurer = new Cesium.MeasurerTool({
+                cesiumViewer: viewer,
+                tileset: tilesets
+            });
+
+            clippingTool = new Cesium.ClippingTool({
                 cesiumViewer: viewer,
                 tileset: tilesets
             });
@@ -315,54 +351,54 @@ var theApp = (function () {
         var mediumQuality  = viewer.canvas.toDataURL('image/jpeg', 0.5);
 
         $.ajax({
-    		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
-    		type : 'post',
-    		data : {
-    			action : 'post_set_thumbnail',
-    			post_id : EDD_CJS_PUBLIC_AJAX.post_id,
-    			capturedJpegImage: mediumQuality
-    		},
-    		success : function( response ) {
-    			alert(response);
-    		},
-    		error: function() {
-    		    alert("error");
-    		}
-	    });
+            url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
+            type : 'post',
+            data : {
+                action : 'post_set_thumbnail',
+                post_id : EDD_CJS_PUBLIC_AJAX.post_id,
+                capturedJpegImage: mediumQuality
+            },
+            success : function( response ) {
+                alert(response);
+            },
+            error: function() {
+                alert("error");
+            }
+        });
     }
 
     function saveCurrentView() {
         $.ajax({
-    		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
-    		type : 'post',
-    		data : {
-    			action : 'post_set_current_view',
-    			post_id : EDD_CJS_PUBLIC_AJAX.post_id,
-    			view_data: cameraController.getViewData()
-    		},
-    		success : function( response ) {
-    			alert(response);
-    		},
-    		error: function(xhr, status, error) {
-    		    alert("error");
-    		}
+            url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
+            type : 'post',
+            data : {
+                action : 'post_set_current_view',
+                post_id : EDD_CJS_PUBLIC_AJAX.post_id,
+                view_data: cameraController.getViewData()
+            },
+            success : function( response ) {
+                alert(response);
+            },
+            error: function(xhr, status, error) {
+                alert("error");
+            }
         });
     }
 
     function resetCameraView() {
-         $.ajax({
-    		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
-    		type : 'post',
-    		data : {
-    			action : 'post_reset_current_view',
-    			post_id : EDD_CJS_PUBLIC_AJAX.post_id
-    		},
-    		success : function( response ) {
-    			alert(response);
-    		},
-    		error: function(xhr, status, error) {
-    		    alert("error");
-    		}
+        $.ajax({
+            url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
+            type : 'post',
+            data : {
+                action : 'post_reset_current_view',
+                post_id : EDD_CJS_PUBLIC_AJAX.post_id
+            },
+            success : function( response ) {
+                alert(response);
+            },
+            error: function(xhr, status, error) {
+                alert("error");
+            }
         });
     }
 
@@ -448,40 +484,40 @@ jQuery(document).ready(function(){
     console.log(EDD_CJS_PUBLIC_AJAX);
 
     $.ajax({
-    		url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
-    		type : 'post',
-    		data : {
-    			action : 'get_post_data',
-    			post_id : EDD_CJS_PUBLIC_AJAX.post_id
-    		},
-    		success : function( response ) {
-    		    // I am not sure why?
-    		    var json_string = response.substring(0, response.length - 1);
+        url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
+        type : 'post',
+        data : {
+            action : 'get_post_data',
+            post_id : EDD_CJS_PUBLIC_AJAX.post_id
+        },
+        success : function( response ) {
+            // I am not sure why?
+            var json_string = response.substring(0, response.length - 1);
 
-    		    var data = JSON.parse(json_string);
+            var data = JSON.parse(json_string);
 
-    		    EDD_CJS_PUBLIC_AJAX.download_asset_url = data.download_asset_url;
-    		    EDD_CJS_PUBLIC_AJAX.download_asset_id = data.download_asset_id;
-    		    EDD_CJS_PUBLIC_AJAX.cesium_token = data.cesium_token;
-    		    EDD_CJS_PUBLIC_AJAX.view_data = data.view_data;
-                EDD_CJS_PUBLIC_AJAX.post_slug = data.post_slug;
+            EDD_CJS_PUBLIC_AJAX.download_asset_url = data.download_asset_url;
+            EDD_CJS_PUBLIC_AJAX.download_asset_id = data.download_asset_id;
+            EDD_CJS_PUBLIC_AJAX.cesium_token = data.cesium_token;
+            EDD_CJS_PUBLIC_AJAX.view_data = data.view_data;
+            EDD_CJS_PUBLIC_AJAX.post_slug = data.post_slug;
 
-    		    var tileset_model_matrix_data = null;
+            var tileset_model_matrix_data = null;
 
-    		    try {
-                    tileset_model_matrix_data = JSON.parse(data.tileset_model_matrix_json);
-                }
-                catch (e) {
+            try {
+                tileset_model_matrix_data = JSON.parse(data.tileset_model_matrix_json);
+            }
+            catch (e) {
 
-                }
+            }
 
-                EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data = tileset_model_matrix_data;
-                EDD_CJS_PUBLIC_AJAX.is_owner = data.is_owner;
+            EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data = tileset_model_matrix_data;
+            EDD_CJS_PUBLIC_AJAX.is_owner = data.is_owner;
 
-    			theApp.start();
-    		},
-    		error: function(xhr, status, error) {
-    		    alert("Failed to get data for given asset!");
-    		}
-        });
+            theApp.start();
+        },
+        error: function(xhr, status, error) {
+            alert("Failed to get data for given asset!");
+        }
+    });
 });

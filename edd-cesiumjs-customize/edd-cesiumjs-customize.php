@@ -234,6 +234,7 @@ class measurement_tools extends WP_Widget {
                         <div id = "measurement_tools">
                             <ul>
                                 <li><input type="checkbox" id ="measurement_distance_checkbox" />  Distance</li>
+                                <li><input type="checkbox" id ="clipping_tool_checkbox" />  Clipping</li>
                             </ul>
 
                         </div>

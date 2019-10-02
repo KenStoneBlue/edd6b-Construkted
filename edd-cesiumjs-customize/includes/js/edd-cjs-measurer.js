@@ -1,12 +1,10 @@
-EDD_CJS.Measurer = (function () {
-    function CesiumMeasurer(options) {
+Cesium.MeasurerTool = (function () {
+    function MeasurerTool(options) {
         this._cesiumViewer = options.cesiumViewer;
         this._scene = options.cesiumViewer.scene;
 
         this._tileset = options.tileset;
         this._screenSpaceHandler = null;
-
-        this._leftDown= false;
 
         this._enabled = false;
 
@@ -22,10 +20,12 @@ EDD_CJS.Measurer = (function () {
 
         this._axisForDebug = null;
 
+        this._lineSegmentCalculated = new Cesium.Event();
+
         this._initEventHandlers();
     }
 
-    CesiumMeasurer.prototype._disableDefaultCameraController = function () {
+    MeasurerTool.prototype._disableDefaultCameraController = function () {
         var scene = this._cesiumViewer.scene;
 
         // disable the default event handlers
@@ -36,7 +36,7 @@ EDD_CJS.Measurer = (function () {
         scene.screenSpaceCameraController.enableLook = false;
     };
 
-    CesiumMeasurer.prototype._enableDefaultCameraController = function () {
+    MeasurerTool.prototype._enableDefaultCameraController = function () {
         var scene = this._cesiumViewer.scene;
 
         // disable the default event handlers
@@ -47,7 +47,7 @@ EDD_CJS.Measurer = (function () {
         scene.screenSpaceCameraController.enableLook = true;
     };
 
-    CesiumMeasurer.prototype._initEventHandlers = function() {
+    MeasurerTool.prototype._initEventHandlers = function() {
         this._screenSpaceHandler = new Cesium.ScreenSpaceEventHandler(this._scene.canvas);
 
         var self = this;
@@ -56,26 +56,11 @@ EDD_CJS.Measurer = (function () {
             if(!self._enabled)
                 return;
 
-            self._onScreeSpaceLeftDown(movement);
+            self._onScreenSpaceLeftDown(movement);
         }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
-
-        this._screenSpaceHandler.setInputAction(function(movement) {
-            if(!self._enabled)
-                return;
-
-            self._onScreeSpaceMove(movement);
-        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-
-        this._screenSpaceHandler.setInputAction(function(movement) {
-            if(!self._enabled)
-                return;
-
-            self._onScreeSpaceLeftUp(movement);
-        }, Cesium.ScreenSpaceEventType.LEFT_UP);
-
     };
 
-    CesiumMeasurer.prototype._addFirstPointEntity = function(cartesian) {
+    MeasurerTool.prototype._addFirstPointEntity = function(cartesian) {
         var pixelSize = this._pointEntityPixelSize;
 
         this._firstPointEntity = this._cesiumViewer.entities.add({
@@ -84,12 +69,12 @@ EDD_CJS.Measurer = (function () {
             point : {
                 pixelSize : pixelSize,
                 color: Cesium.Color.RED,
-               // disableDepthTestDistance: Number.POSITIVE_INFINITY
+                // disableDepthTestDistance: Number.POSITIVE_INFINITY
             }
         });
     };
 
-    CesiumMeasurer.prototype._addSecondPointEntity = function(cartesian) {
+    MeasurerTool.prototype._addSecondPointEntity = function(cartesian) {
         var pixelSize = this._pointEntityPixelSize;
 
         var that = this;
@@ -97,36 +82,24 @@ EDD_CJS.Measurer = (function () {
         this._secondPointEntity = this._cesiumViewer.entities.add({
             name : 'first point',
             position: new Cesium.CallbackProperty(function () {
-                    return that._secondPointCartesian;
-                }, false),
+                return that._secondPointCartesian;
+            }, false),
             point : {
                 pixelSize : pixelSize,
                 color: Cesium.Color.RED,
-               // disableDepthTestDistance: Number.POSITIVE_INFINITY
+                // disableDepthTestDistance: Number.POSITIVE_INFINITY
             }
         });
     };
 
-    CesiumMeasurer.prototype._removePolylineEntity = function() {
-        if(!this._polylineEntity)
-            return;
-
-        this._cesiumViewer.entities.remove(this._polylineEntity);
-
-        this._polylineEntity = null;
-    };
-
-    CesiumMeasurer.prototype._addPolylineEntity = function() {
+    MeasurerTool.prototype._addPolylineEntity = function() {
         var that = this;
 
         this._polylineEntity = this._cesiumViewer.entities.add({
             name : 'line',
 
             polyline : {
-                positions: new Cesium.CallbackProperty(function () {
-                    return [that._firstPointCartesian, that._secondPointCartesian];
-                }, false),
-                //positions: [that._firstPointCartesian, that._secondPointCartesian],
+                positions: [that._firstPointCartesian, that._secondPointCartesian],
 
                 width : 5,
                 //depthFailMaterial : Cesium.Color.GREEN,
@@ -136,7 +109,7 @@ EDD_CJS.Measurer = (function () {
         });
     };
 
-    CesiumMeasurer.prototype._getCartesianFromWindowPosition = function(position) {
+    MeasurerTool.prototype._getCartesianFromWindowPosition = function(position) {
         var scene = this._scene;
 
         scene.globe.depthTestAgainstTerrain = true;
@@ -151,7 +124,7 @@ EDD_CJS.Measurer = (function () {
             return null;
     };
 
-    CesiumMeasurer.prototype._onScreeSpaceLeftDown = function(movement) {
+    MeasurerTool.prototype._onScreenSpaceLeftDown = function(movement) {
         this._leftDown = true;
 
         var cartesian = this._getCartesianFromWindowPosition(movement.position);
@@ -161,41 +134,32 @@ EDD_CJS.Measurer = (function () {
             return;
         }
 
-        this._clean();
-
-        this._firstPointCartesian = cartesian;
-        this._secondPointCartesian = cartesian;
-
-        this._addFirstPointEntity(cartesian);
-        this._addSecondPointEntity(cartesian);
-        this._addPolylineEntity();
-    };
-
-    CesiumMeasurer.prototype._onScreeSpaceMove = function(movement) {
-        var frameMonitor = Cesium.FrameRateMonitor.fromScene(this._scene);
-
-        console.log(frameMonitor.lastFramesPerSecond );
-
-        if(!this._leftDown)
-            return;
-
-        var cartesian = this._getCartesianFromWindowPosition(movement.endPosition);
-
-        if (cartesian == null) {
-            console.info("Failed to get position! Please retry.");
-            return;
+        if(this._firstPointCartesian === null && this._secondPointCartesian === null ) {
+            this._firstPointCartesian = cartesian;
+            this._addFirstPointEntity(cartesian);
+            this._scene.screenSpaceCameraController.enableInputs = false;
         }
+        else if (this._firstPointCartesian && this._secondPointCartesian  ) {
+            this._clean();
 
-        this._secondPointCartesian = cartesian;
+            this._firstPointCartesian = cartesian;
+            this._addFirstPointEntity(cartesian);
+            this._scene.screenSpaceCameraController.enableInputs = false;
+        }
+        else if (this._firstPointCartesian !== null && this._secondPointCartesian === null) {
+            this._secondPointCartesian = cartesian;
+
+            this._addSecondPointEntity(cartesian);
+            this._addPolylineEntity();
+            this._calc();
+            this._scene.screenSpaceCameraController.enableInputs = true;
+        }
+        else {
+            console.error("unreachable code!");
+        }
     };
 
-    CesiumMeasurer.prototype._onScreeSpaceLeftUp  = function(movement) {
-        this._leftDown = false;
-
-        this._calc();
-    };
-
-    CesiumMeasurer.prototype.start = function () {
+    MeasurerTool.prototype.start = function () {
         this._enabled = true;
         this._disableDefaultCameraController();
 
@@ -213,7 +177,7 @@ EDD_CJS.Measurer = (function () {
         }
     };
 
-    CesiumMeasurer.prototype.stop = function () {
+    MeasurerTool.prototype.stop = function () {
         this._enabled = false;
         this._enableDefaultCameraController();
         this._clean();
@@ -224,7 +188,7 @@ EDD_CJS.Measurer = (function () {
         }
     };
 
-    CesiumMeasurer.prototype._clean = function () {
+    MeasurerTool.prototype._clean = function () {
         this._cesiumViewer.entities.remove(this._firstPointEntity);
         this._cesiumViewer.entities.remove(this._secondPointEntity);
         this._cesiumViewer.entities.remove(this._polylineEntity);
@@ -237,7 +201,7 @@ EDD_CJS.Measurer = (function () {
         this._secondPointCartesian = null;
     };
 
-    CesiumMeasurer.prototype._calc = function () {
+    MeasurerTool.prototype._calc = function () {
         var boundingSphere = this._tileset.boundingSphere;
 
         var center = boundingSphere.center;
@@ -259,11 +223,12 @@ EDD_CJS.Measurer = (function () {
         var yComponent = displacementVector.y;
         var zComponent = displacementVector.z;
 
-        $('#measurement_tools_distance').html(dist.toFixed(3) + 'm');
-        $('#measurement_tools_distance_x').html(xComponent.toFixed(3) + "m");
-        $('#measurement_tools_distance_y').html(yComponent.toFixed(3) + "m");
-        $('#measurement_tools_distance_z').html(zComponent.toFixed(3) + "m");
+        this._lineSegmentCalculated.raiseEvent(dist, xComponent, yComponent, zComponent);
     };
 
-    return CesiumMeasurer;
+    MeasurerTool.prototype.lineSegmentCalculated = function () {
+        return this._lineSegmentCalculated;
+    };
+
+    return MeasurerTool;
 })();
