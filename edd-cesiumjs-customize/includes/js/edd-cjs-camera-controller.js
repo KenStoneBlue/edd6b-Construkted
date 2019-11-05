@@ -243,6 +243,12 @@ EDD_CJS.CameraController = (function () {
 
         // consider terrain height
         var terrainHeight = globe.getHeight(cartographic);
+		
+		if(terrainHeight === undefined)
+        {
+            alert("Unfortunately failed to enter FPV! We can not get terrain height on clicked point.");
+            return;
+        }
 
         // determine we clicked out of main 3d tileset
         if (Cesium.Math.equalsEpsilon(cartographic.height, terrainHeight, Cesium.Math.EPSILON4, Cesium.Math.EPSILON1))
