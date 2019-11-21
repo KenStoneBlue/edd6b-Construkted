@@ -41,11 +41,12 @@ class EDD_CJS_Scripts {
             //if( !empty($download_asset_id) || !empty($download_asset_url) ){
             if($display_3dtileset ){
                 // add css for check code in public
-                wp_enqueue_style( 'edd-cjs-cesium-widgets-style',  'https://cesiumjs.org/releases/1.62/Build/Cesium/Widgets/widgets.css', array(), EDD_CJS_LIB_VER );
-                wp_enqueue_script('edd-cjs-cesium-script', 'https://cesiumjs.org/releases/1.62/Build/Cesium/Cesium.js', array('jquery'), EDD_CJS_LIB_VER, true);
-                
+                wp_enqueue_style( 'edd-cjs-cesium-widgets-style',  'https://cesiumjs.org/releases/1.63.1/Build/Cesium/Widgets/widgets.css', array(), EDD_CJS_LIB_VER );
+                wp_enqueue_script('edd-cjs-cesium-script', 'https://cesiumjs.org/releases/1.63.1/Build/Cesium/Cesium.js', array('jquery'), EDD_CJS_LIB_VER, true);
+
                 $script_dir = '/wp-content/plugins/edd-cesiumjs-customize/includes/js/';
 
+                wp_enqueue_script('cesium-ion-sdk-plugin-script',  $script_dir . 'CesiumIonSDKPlugin.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
                 wp_enqueue_script('edd-cjs-camera-controller-script',  $script_dir . 'edd-cjs-camera-controller.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
                 wp_enqueue_script('edd-cjs-3dtileset-location-editor-script', $script_dir . 'edd-cjs-3dtileset-location-editor.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
                 wp_enqueue_script('edd-cjs-measurer-script', $script_dir . 'edd-cjs-measurer.js', array('jquery', 'edd-cjs-cesium-script'), EDD_CJS_LIB_VER, true);
@@ -53,6 +54,7 @@ class EDD_CJS_Scripts {
 
                 wp_register_script('edd-cjs-public-script', EDD_CJS_INC_URL . '/js/edd-cjs-public-script.js',
                     array('jquery',
+                        'cesium-ion-sdk-plugin-script',
                         'edd-cjs-camera-controller-script',
                         'edd-cjs-3dtileset-location-editor-script',
                         'edd-cjs-measurer-script',

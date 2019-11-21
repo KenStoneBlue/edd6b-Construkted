@@ -3,7 +3,7 @@ var cameraController = null;
 
 var theApp = (function () {
     var tilesets = null;
-    var tilesetLocationEditor = null;
+    var transformEditor = null;
     var measurer = null;
     var clippingTool = null;
 
@@ -28,8 +28,8 @@ var theApp = (function () {
 
             if(cameraController)
                 cameraController.setEnabledFPV(false);
-            if(tilesetLocationEditor)
-                tilesetLocationEditor.setVisible(true);
+            if(transformEditor)
+                transformEditor.viewModel.activate();
         });
 
         $('#exit_edit_asset_geo_location_button').click(function () {
@@ -48,7 +48,7 @@ var theApp = (function () {
             if(cameraController)
                 cameraController.setEnabledFPV(true);
 
-            tilesetLocationEditor.setVisible(false);
+            transformEditor.viewModel.deactivate();
         });
     }
 
@@ -164,6 +164,22 @@ var theApp = (function () {
             fullscreenElement: "cesiumContainer",
             requestRenderMode : true
         });
+
+        viewer.extend(Cesium.viewerMeasureMixin, {
+            units: new Cesium.MeasureUnits({
+                distanceUnits : Cesium.DistanceUnits.METERS,
+                areaUnits : Cesium.AreaUnits.SQUARE_METERS,
+                volumeUnits : Cesium.VolumeUnits.CUBIC_METERS
+            })
+        });
+
+        // fix css error
+        var measureButtons = document.getElementsByClassName('cesium-measure-button');
+
+        for(i = 0; i < measureButtons.length; i++)
+        {
+            measureButtons[i].style["box-sizing"] = 'content-box';
+        }
 
         //var terrainDisable = EDD_CJS_PUBLIC_AJAX.download_asset_id.length && EDD_CJS_PUBLIC_AJAX.download_asset_id == "32717";
 
@@ -309,9 +325,14 @@ var theApp = (function () {
                         setTilesetModelMatrixData(tilesets, latitude, longitude, altitude, heading);
 
                         if(EDD_CJS_PUBLIC_AJAX.is_owner) {
-                            tilesetLocationEditor = new EDD_CJS.Cesium3dTilesetLocationEditor(viewer, tilesets);
+                            transformEditor = new Cesium.TransformEditor({
+                                container: viewer.container,
+                                scene: viewer.scene,
+                                transform: tilesets.modelMatrix,
+                                boundingSphere: tilesets.boundingSphere
+                            });
 
-                            tilesetLocationEditor.setVisible(false);
+                            transformEditor.viewModel.deactivate();
                         }
 
                     } else {
@@ -321,9 +342,14 @@ var theApp = (function () {
             }
 
             if(EDD_CJS_PUBLIC_AJAX.is_owner) {
-                tilesetLocationEditor = new EDD_CJS.Cesium3dTilesetLocationEditor(viewer, tilesets);
+                transformEditor = new Cesium.TransformEditor({
+                    container: viewer.container,
+                    scene: viewer.scene,
+                    transform: tilesets.modelMatrix,
+                    boundingSphere: tilesets.boundingSphere
+                });
 
-                tilesetLocationEditor.setVisible(false);
+                transformEditor.viewModel.deactivate();
             }
 
             cameraController.setDefaultView();
@@ -482,6 +508,8 @@ var theApp = (function () {
 
 jQuery(document).ready(function(){
     console.log(EDD_CJS_PUBLIC_AJAX);
+
+    window.$=jQuery;
 
     $.ajax({
         url : EDD_CJS_PUBLIC_AJAX.ajaxurl,
