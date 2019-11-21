@@ -1,0 +1,6 @@
+.cesium-viewer-measureContainer {
+    position: relative;
+    display: inline-block;
+    margin: 0 3px;
+    vertical-align: middle;
+}

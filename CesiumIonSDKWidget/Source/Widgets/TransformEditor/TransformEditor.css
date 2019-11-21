@@ -1,0 +1,42 @@
+.transform-editor-menu {
+    position: absolute;
+    stroke: none;
+    fill: #edffff;
+}
+
+.transform-editor-button {
+    padding: 0;
+    width: 25px;
+    height: 25px;
+    border-radius: 13px;
+}
+
+.transform-editor-button > svg {
+    margin-top: 2px;
+    margin-left: 2px;
+}
+
+.transform-editor-options {
+    position: relative;
+    left: -16px;
+    background-color: #303336;
+    color: #edffff;
+}
+
+.transform-editor-button-row > div {
+    display: inline-block;
+    cursor: pointer;
+    padding-top: 4px;
+    padding-left: 4px;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #444;
+}
+
+.transform-editor-button-row > div.selected {
+    background-color: #1E90FF;
+}
+
+.transform-editor-button-row > div:hover {
+    background-color: #48b;
+}
