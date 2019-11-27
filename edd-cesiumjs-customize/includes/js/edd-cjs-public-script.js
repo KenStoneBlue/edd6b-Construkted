@@ -282,9 +282,17 @@ var theApp = (function () {
         tilesets.maximumMemoryUsage = 512; // Default is 512
 
 // Point cloud point size
-        tilesets.pointCloudShading.attenuation = true;
-        tilesets.pointCloudShading.maximumAttenuation = 5;
+        //tilesets.pointCloudShading.attenuation = true;
+        //tilesets.pointCloudShading.maximumAttenuation = 5;
 
+		tilesets.maximumScreenSpaceError = 16.0;
+		tilesets.pointCloudShading.maximumAttenuation = 4.0; // Don't allow points larger than 4 pixels.
+		tilesets.pointCloudShading.baseResolution = 4; // Assume an original capture resolution of 5 centimeters between neighboring points.
+		tilesets.pointCloudShading.geometricErrorScale = 0.5; // Applies to both geometric error and the base resolution.
+		tilesets.pointCloudShading.attenuation = true;
+		tilesets.pointCloudShading.eyeDomeLighting = true;
+		tilesets.pointCloudShading.eyeDomeLightingStrength = 0.4;
+		
         viewer.scene.debugShowFramesPerSecond = true;
 
         tilesets.readyPromise.then(function(){
