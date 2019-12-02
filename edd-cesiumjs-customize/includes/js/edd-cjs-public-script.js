@@ -330,7 +330,7 @@ var theApp = (function () {
                         var longitude = EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data.longitude;
                         var altitude = EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data.altitude;
 
-                        setTilesetModelMatrixData(tilesets, latitude, longitude, altitude, heading);
+                        setTilesetModelMatrixData(tilesets, EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data);
 
                         if(EDD_CJS_PUBLIC_AJAX.is_owner) {
                             transformEditor = new Cesium.TransformEditor({
@@ -366,16 +366,22 @@ var theApp = (function () {
         });
     }
 
-    function setTilesetModelMatrixData(tileset, latitude, longitude, altitude, heading) {
-        heading = Cesium.Math.toRadians(heading);
+    function setTilesetModelMatrixData(tileset, modelMatrixData) {
+        var position = modelMatrixData.position;
 
-        var pitch = 0;
-        var roll = 0;
-        var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+        var center = new Cesium.Cartesian3(position.x, position.y, position.z);
 
-        var center = Cesium.Cartesian3.fromDegrees(longitude, latitude, altitude);
+        var headingPitchRoll = modelMatrixData.headingPitchRoll;
 
-        tilesets.modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(center, hpr);
+        var hpr = new Cesium.HeadingPitchRoll(headingPitchRoll.heading ,headingPitchRoll.pitch, headingPitchRoll.roll);
+
+        var scale = modelMatrixData.scale;
+
+        var scaleCartesian3 = new Cesium.Cartesian3(scale.x, scale.y, scale.z);
+
+        var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(center, hpr);
+
+        tilesets.modelMatrix = Cesium.Matrix4.setScale(modelMatrix, scale, new Cesium.Matrix4());
     }
 
     function captureThumbnail() {
@@ -471,11 +477,19 @@ var theApp = (function () {
             return;
         }
 
+        var position = transformEditor.viewModel.position;
+        var headingPitchRoll = transformEditor.viewModel.headingPitchRoll;
+        var scale = transformEditor.viewModel.scale;
+
         var data = {
             latitude: latitude,
             longitude: longitude,
             altitude: altitude,
-            heading: heading
+            heading: heading,
+
+            position: position,
+            headingPitchRoll: headingPitchRoll,
+            scale: scale
         };
 
         $.ajax({
@@ -498,7 +512,7 @@ var theApp = (function () {
                 }
 
                 alert("Successfully updated!");
-                setTilesetModelMatrixData(tilesets, latitude, longitude, altitude, heading);
+                setTilesetModelMatrixData(tilesets, data);
                 viewer.zoomTo(tilesets);
             },
             error: function(xhr, status, error) {
