@@ -33,7 +33,6 @@ var theApp = (function () {
         });
 
         $('#exit_edit_asset_geo_location_button').click(function () {
-
             $('#tileset_latitude_label').html($('#tileset_latitude').val());
             $('#tileset_longitude_label').html($('#tileset_longitude').val());
 
@@ -49,6 +48,69 @@ var theApp = (function () {
                 cameraController.setEnabledFPV(true);
 
             transformEditor.viewModel.deactivate();
+        });
+
+        $('#tileset_longitude').change(function () {
+            var longitude = $('#tileset_longitude').val();
+
+            if(longitude > 180 || longitude < -180) {
+                console.warn('invalid longitude: ' + longitude);
+                return;
+            }
+
+            var translation = Cesium.Matrix4.getTranslation(tilesets.modelMatrix, new Cesium.Cartesian3());
+
+            var carto = Cesium.Cartographic.fromCartesian(translation);
+
+            carto.longitude = longitude * Cesium.Math.RADIANS_PER_DEGREE;
+
+            var newPosition = viewer.scene.globe.ellipsoid.cartographicToCartesian(carto);
+
+            tilesets.modelMatrix = Cesium.Matrix4.setTranslation(tilesets.modelMatrix, newPosition, tilesets.modelMatrix);
+
+            viewer.zoomTo(tilesets);
+        });
+
+        $('#tileset_latitude').change(function () {
+            var latitude = $('#tileset_latitude').val();
+
+            if(latitude > 90 || latitude < -90) {
+                console.warn('invalid latitude: ' + latitude);
+                return;
+            }
+
+            var translation = Cesium.Matrix4.getTranslation(tilesets.modelMatrix, new Cesium.Cartesian3());
+
+            var carto = Cesium.Cartographic.fromCartesian(translation);
+
+            carto.latitude = latitude * Cesium.Math.RADIANS_PER_DEGREE;
+
+            var newPosition = viewer.scene.globe.ellipsoid.cartographicToCartesian(carto);
+
+            tilesets.modelMatrix = Cesium.Matrix4.setTranslation(tilesets.modelMatrix, newPosition, tilesets.modelMatrix);
+
+            viewer.zoomTo(tilesets);
+        });
+
+        $('#tileset_altitude').change(function () {
+            var altitude = $('#tileset_altitude').val();
+
+            if(altitude > 15000 || altitude < -1000) {
+                console.warn('invalid altitude: ' + altitude);
+                return;
+            }
+
+            var translation = Cesium.Matrix4.getTranslation(tilesets.modelMatrix, new Cesium.Cartesian3());
+
+            var carto = Cesium.Cartographic.fromCartesian(translation);
+
+            carto.allatitude = altitude;
+
+            var newPosition = viewer.scene.globe.ellipsoid.cartographicToCartesian(carto);
+
+            tilesets.modelMatrix = Cesium.Matrix4.setTranslation(tilesets.modelMatrix, newPosition, tilesets.modelMatrix);
+
+            viewer.zoomTo(tilesets);
         });
     }
 
@@ -324,12 +386,6 @@ var theApp = (function () {
             if(tilesets.asset.extras != null) {
                 if (tilesets.asset.extras.ion.georeferenced !== true) {
                     if (EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data) {
-                        var heading = EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data.heading;
-
-                        var latitude = EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data.latitude;
-                        var longitude = EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data.longitude;
-                        var altitude = EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data.altitude;
-
                         setTilesetModelMatrixData(tilesets, EDD_CJS_PUBLIC_AJAX.tileset_model_matrix_data);
 
                         if(EDD_CJS_PUBLIC_AJAX.is_owner) {
@@ -369,7 +425,7 @@ var theApp = (function () {
     function setTilesetModelMatrixData(tileset, modelMatrixData) {
         var position = modelMatrixData.position;
 
-        var center = new Cesium.Cartesian3(position.x, position.y, position.z);
+        var center = Cesium.Cartesian3.fromDegrees(modelMatrixData.longitude, modelMatrixData.latitude, modelMatrixData.altitude);
 
         var headingPitchRoll = modelMatrixData.headingPitchRoll;
 
@@ -381,7 +437,7 @@ var theApp = (function () {
 
         var modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(center, hpr);
 
-        tilesets.modelMatrix = Cesium.Matrix4.setScale(modelMatrix, scale, new Cesium.Matrix4());
+        tilesets.modelMatrix = Cesium.Matrix4.setScale(modelMatrix, scaleCartesian3, new Cesium.Matrix4());
     }
 
     function captureThumbnail() {
