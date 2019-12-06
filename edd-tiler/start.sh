@@ -1,0 +1,1 @@
+nohup node ./monitor.js &

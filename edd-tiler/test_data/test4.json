@@ -1,0 +1,7 @@
+{
+  "state": "Unknown",
+  "name" : "test4_body-rc-D01-02",
+  "description": "this is test4",
+  "input": "/home/ec2-user/test/body-rc-D01-02.zip",
+  "sourceType" : "3D_CAPTURE"
+}

@@ -28,4 +28,4 @@ exports.downloader = '/home/ec2-user/asset_downloader-v3.py';
 exports.downloaderThreadCount = 10;
 exports.downloadPath = 'E:/0Source/Edd6/edd6-Construkted/asset_downloader';
 exports.tilesToolsPath = '/home/ec2-user/3d-tiles-tools/tools/bin/3d-tiles-tools.js';
-exports.s3Location = '/mnt/s3-files';
+exports.s3Location = '/mnt/s3-assets';
