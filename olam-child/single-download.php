@@ -4,8 +4,23 @@
  *
  * @package Olam
  */
-
-get_header(); ?>
+$viewer_only = isset($_GET['viewer-only']);
+if($viewer_only){
+    get_header('empty'); 
+}else{
+    get_header(); 
+}
+?>
+<?php if($viewer_only): ?>
+                <?php 
+                if ( have_posts() ) : 
+                while ( have_posts() ) : the_post(); 
+                ?>
+                    <div id="cesiumContainer" ></div>
+                    <div id="toolbar"><button id="exitFPVModeButton" class="cesium-button">EXIT FPV MODE</button></div>
+                <?php
+                endwhile; endif;
+else: ?>
 
     <div class="section">
         <div class="container">
@@ -150,4 +165,10 @@ get_header(); ?>
 
         </div>
     </div>
-<?php get_footer();
+<?php 
+endif;
+if($viewer_only){
+    get_footer('empty');
+}else{
+    get_footer();
+}
