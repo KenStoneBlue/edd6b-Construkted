@@ -1,1 +1,1 @@
-nohup node ./monitor.js &
+nohup node ./app.js &
