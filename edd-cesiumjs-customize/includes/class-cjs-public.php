@@ -486,9 +486,19 @@ class EDD_CJS_Public {
      * @return
      */
     function start_force_tiling( $post_id ) {
+        $post = get_post($post_id);
+        $slug = $post->post_name;
+
         $edd_download_files = get_post_meta($post_id, 'edd_download_files', true);
 
         $file_name = $edd_download_files[0]['name'];
+
+        $asset_model_type = get_post_meta($post_id, 'asset_model_type', true);
+
+        if($asset_model_type == false) {
+            wp_die('asset model type is not specified!');
+            return;
+        }
 
         $current_user = wp_get_current_user();
 
@@ -498,7 +508,7 @@ class EDD_CJS_Public {
 
         $server_url = 'http://18.189.185.13:5000/request_tiling';
 
-        $url = $server_url . '/?' . 'postId=' . $post_id . '&userName=' . $current_user_name . '&fileName=' . $file_name;
+        $url = $server_url . '/?' . 'postId=' . $post_id . '&slug=' . $slug . '&userName=' . $current_user_name . '&fileName=' . $file_name . '&assetModelType=' . $asset_model_type;
 
         $ret = wp_remote_get( $url );
 

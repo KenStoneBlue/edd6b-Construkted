@@ -10,11 +10,12 @@ const http = require('./http');
 async function createAsset(data) {
     const userName = data.userName;
     const fileName = data.fileName;
+    const sourceType = data.sourceType;
 
     const accessToken = global.accessToken;
     const name = userName + '_' + '_' + fileName;
     const description = userName + '_' + '_' + fileName;
-    const sourceType = '3D_CAPTURE';
+
     const input = global.s3UploadLocation + '/' + userName + '/' + fileName;
 
     data.state = global.State.Creating;
@@ -191,13 +192,14 @@ async function packaging(data) {
     data.state = global.State.Packaging;
 
     const assetId = data.assetId;
+    const slug = data.slug;
 
     logger.log('Start packaging ' + 'Asset : ' + assetId);
 
     const spawn = require('child_process').spawn;
 
     const downloadedTilesetFolder = './' + assetId;
-    const outputFilePath = global.s3AssetLocation + '/' + assetId + '.3dtiles';
+    const outputFilePath = global.s3AssetLocation + '/' + slug + '.3dtiles';
 
     const child = spawn(global.node, [global.tilesToolsPath, 'tilesetToDatabase', downloadedTilesetFolder, outputFilePath]);
 

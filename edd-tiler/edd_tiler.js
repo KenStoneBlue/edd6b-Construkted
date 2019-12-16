@@ -32,12 +32,18 @@ app.get('/', function(req, res){
 
 app.get('/request_tiling', function(req, res){
     const postId = req.query.postId;
+    const slug = req.query.slug;
     const userName = req.query.userName;
     const fileName = req.query.fileName;
-
+    const assetModelType = req.query.assetModelType;
 
     if(!postId ) {
         http.send(res, global.ERROR_INVALID_PARAMETER, "postId required!", {});
+        return;
+    }
+
+    if(!slug) {
+        http.send(res, global.ERROR_INVALID_PARAMETER, "slug required!", {});
         return;
     }
 
@@ -51,6 +57,28 @@ app.get('/request_tiling', function(req, res){
         return;
     }
 
+    if(!assetModelType ) {
+        http.send(res, global.ERROR_INVALID_PARAMETER, "assetModelType required!", {});
+        return;
+    }
+
+    // convert WP asset model type to source type of Cesium Ion API
+
+    let sourceType = null;
+
+    if(assetModelType === 'Polygon Mesh') {
+        sourceType = '3D_CAPTURE';
+    } else if(assetModelType === 'Point Cloud') {
+        sourceType = 'POINT_CLOUD';
+    } else if(assetModelType === '3D CAD Model') {
+        sourceType = '3D_MODEL';
+    }
+
+    if(sourceType == null) {
+        http.send(res, global.ERROR_INVALID_PARAMETER, "failed to find sourceType of asset!", {});
+        return;
+    }
+
     const path = global.s3UploadLocation + '/' + userName + '/' + fileName;
 
     if (!fs.existsSync(path)) {
@@ -60,8 +88,10 @@ app.get('/request_tiling', function(req, res){
 
     const data = {
         postId: postId,
+        slug: slug,
         userName: userName,
-        fileName: fileName
+        fileName: fileName,
+        sourceType: sourceType
     };
 
     tilingJobInfos.push(data);
