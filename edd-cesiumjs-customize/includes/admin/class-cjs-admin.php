@@ -44,10 +44,10 @@ class EDD_CJS_Admin {
 	*/
 	public function edd_cjs_option_page_admin_menu() {
 		add_options_page(
-			'Constructed',
-			'Constructed',
+			'Construkted',
+			'Construkted',
 			'manage_options',
-			'constructed_page',
+			'construkted_page',
 			array($this,'edd_cjs_constructed_settings_page')
 		);
 	}
@@ -77,10 +77,9 @@ class EDD_CJS_Admin {
 	*/
 	public function edd_cjs_constructed_tab(){
 		global $constructed_active_tab; ?>
-		<a class="nav-tab <?php echo $constructed_active_tab == 'cesium-viewer' ? 'nav-tab-active' : ''; ?>" href="<?php echo admin_url( 'options-general.php?page=constructed_page&tab=cesium-viewer' ); ?>"><?php _e( 'Cesium Viewer', 'edd_cjs' ); ?> </a>
+		<a class="nav-tab <?php echo $constructed_active_tab == 'cesium-viewer' ? 'nav-tab-active' : ''; ?>" href="<?php echo admin_url( 'options-general.php?page=construkted_page&tab=cesium-viewer' ); ?>"><?php _e( 'Cesium Viewer', 'edd_cjs' ); ?> </a>
 
-		<a class="nav-tab <?php echo $constructed_active_tab == 'subscription-plan' ? 'nav-tab-active' : ''; ?>" href="<?php echo admin_url( 'options-general.php?page=constructed_page&tab=subscription-plan' ); ?>"><?php _e( 'Subscription Plans', 'edd_cjs' ); ?> </a>
-
+		<a class="nav-tab <?php echo $constructed_active_tab == 'subscription-plan' ? 'nav-tab-active' : ''; ?>" href="<?php echo admin_url( 'options-general.php?page=construkted_page&tab=subscription-plan' ); ?>"><?php _e( 'Subscription Plans', 'edd_cjs' ); ?> </a>
 		<?php
 	}
 
