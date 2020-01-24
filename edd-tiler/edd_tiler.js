@@ -36,6 +36,7 @@ app.get('/request_tiling', function(req, res){
     const userName = req.query.userName;
     const fileName = req.query.fileName;
     const assetModelType = req.query.assetModelType;
+    const attachmentId = req.query.attachmentId;
 
     if(!postId ) {
         http.send(res, global.ERROR_INVALID_PARAMETER, "postId required!", {});
@@ -59,6 +60,11 @@ app.get('/request_tiling', function(req, res){
 
     if(!assetModelType ) {
         http.send(res, global.ERROR_INVALID_PARAMETER, "assetModelType required!", {});
+        return;
+    }
+
+    if(!attachmentId ) {
+        http.send(res, global.ERROR_INVALID_PARAMETER, "attachmentId required!", {});
         return;
     }
 
@@ -91,7 +97,8 @@ app.get('/request_tiling', function(req, res){
         slug: slug,
         userName: userName,
         fileName: fileName,
-        sourceType: sourceType
+        sourceType: sourceType,
+        attachmentId: attachmentId
     };
 
     tilingJobInfos.push(data);

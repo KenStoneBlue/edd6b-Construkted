@@ -235,7 +235,7 @@ async function packaging(data) {
 
             data.state = global.State.Finished;
 
-            http.get(global.WPServerIp, undefined, global.WPUpdateProductRESTAPI_EndPoint, {post_id: data.postId}, function (success, data) {
+            http.get(global.WPServerIp, undefined, global.WPUpdateProductRESTAPI_EndPoint, {post_id: data.postId, attachment_id: data.attachmentId}, function (success, data) {
                 if(success === false){
                     logger.log('failed to connect to WP REST API');
                     return;
