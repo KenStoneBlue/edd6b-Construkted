@@ -235,20 +235,25 @@ async function packaging(data) {
 
             data.state = global.State.Finished;
 
-            http.get(global.WPServerIp, undefined, global.WPUpdateProductRESTAPI_EndPoint, {post_id: data.postId, orig_asset_attachment_id: data.attachmentId}, function (success, data) {
-                if(success === false){
-                    logger.log('failed to connect to WP REST API');
-                    return;
-                }
+            var url = global.WPServerIp;
 
-                if(data.errCode === 0)
-                {
-                    logger.log(data.errMsg);
-                }
-                else {
-                    logger.error(data.errMsg);
-                }
+            url += global.WPUpdateProductRESTAPI_EndPoint;
+            url += '?';
+            url = url + 'post_id=' + data.postId + '&';
+            url = url + 'orig_asset_attachment_id=' + data.attachmentId;
+
+            const response = await request({
+                url: url,
+                json: true,
             });
+
+            if(response.errCode === 0)
+            {
+                logger.log(data.errMsg);
+            }
+            else {
+                response.error(data.errMsg);
+            }
         }
     });
 }
