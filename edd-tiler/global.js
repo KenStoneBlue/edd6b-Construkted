@@ -2,13 +2,15 @@ const fs = require('fs');
 
 const State = {
     Unknown: 'Unknown',
-    Creating: 'Creating',
-    Uploading: 'Uploading',
-    Tiling: 'Tiling',
-    Downloading: 'Downloading',
-    Packaging: 'Packaging',
-    Deleting: 'Deleting',
-    Finished: 'Finished',
+    Creating: 'Creating',        // creating Cesium asset
+    Uploading: 'Uploading',      // uploading
+    Tiling: 'Tiling',            // tiling by Cesium API
+    Downloading: 'Downloading',  // downloading tileset tiled by Cesium API
+    Packaging: 'Packaging',      // packaging downloaded tileset to sqlite file
+    Deleting: 'Deleting',        // deleting downloaded original downloaded tile
+    Finished: 'Finished',        // tiling and packaging finished
+    Completed: 'Completed',      // corresponding WordPress 's post state is to updated to 'publish'
+    ErrorInUpdatePostState: 'ErrorInPostState'
 };
 
 const accessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzNWU3YWY1MS1lNmUyLTRiMzAtYmVhZS1jNGVkMzVkYzU0MzIiLCJpZCI6MjkyMSwic2NvcGVzIjpbImFzbCIsImFzciIsImFzdyIsImdjIl0sImlhdCI6MTU3NTM2OTg5NX0.24GRSi6fRXbilevELFVtUPsuaN-YrU6gjNw63jG4soQ';

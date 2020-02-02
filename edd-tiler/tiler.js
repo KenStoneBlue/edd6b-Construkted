@@ -250,9 +250,11 @@ async function packaging(data) {
             if(response.errCode === 0)
             {
                 logger.log(data.errMsg);
+                data.state = global.State.Completed;
             }
             else {
                 response.error(data.errMsg);
+                data.state = global.State.ErrorInUpdatePostState;
             }
         }
     });
