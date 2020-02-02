@@ -2,6 +2,7 @@ const express = require("express");
 const logger = require('./logger');
 const global = require('./global');
 const http = require('./http');
+const https = require('https');
 const tiler = require('./tiler');
 const fs = require('fs');
 
@@ -18,8 +19,22 @@ app.all('*', function(req, res, next) {
 
 let tilingJobInfos = [];
 
-exports.start = function(){
+exports.startHttp = function(){
     let server = app.listen(global.port);
+
+    logger.log("server is listening on " + global.port);
+
+    return server;
+};
+
+exports.start = function(){
+    var options = {
+        key: fs.readFileSync('key.pem'),
+        cert: fs.readFileSync('cert.pem')
+    };
+
+    let server = https.createServer(options, app);
+    server.listen(global.port);
 
     logger.log("server is listening on " + global.port);
 
