@@ -28,9 +28,9 @@ exports.startHttp = function(){
 };
 
 exports.start = function(){
-    var options = {
-        key: fs.readFileSync('key.pem'),
-        cert: fs.readFileSync('cert.pem')
+    let options = {
+        key: fs.readFileSync('privkey.pem'),
+        cert: fs.readFileSync('fullchain.pem')
     };
 
     let server = https.createServer(options, app);
@@ -135,4 +135,53 @@ function startTiling(data) {
 app.get('/get_active', function(req, res){
     http.send(res, global.ERROR_SUCCESS, "", tilingJobInfos);
 });
+
+app.get('/delete_asset', function(req, res){
+    const userName = req.query.userName;
+    const slug = req.query.slug;
+    const original3DFileBaseName = req.query.original3DFileBaseName;
+
+    if(!userName ) {
+        http.send(res, global.ERROR_INVALID_PARAMETER, "userName required!", {});
+        return;
+    }
+
+    if(!slug) {
+        http.send(res, global.ERROR_INVALID_PARAMETER, "slug required!", {});
+        return;
+    }
+
+    if(!original3DFileBaseName ) {
+        http.send(res, global.ERROR_INVALID_PARAMETER, "original3DFileBaseName required!", {});
+        return;
+    }
+
+    let data = {
+        isSuccessfulDeleteUploadedFile: false,
+        isSuccessfulDelete3DTile: false,
+    };
+
+    const uploadedFilePath = global.s3UploadLocation + '/' + userName + '/' + slug + '-' + original3DFileBaseName;
+
+    if (fs.existsSync(uploadedFilePath)) {
+        fs.unlinkSync(uploadedFilePath);
+        data.isSuccessfulDeleteUploadedFile = true;
+    }
+
+    const assetPath = global.s3AssetLocation + '/' + slug + '.3dtiles';
+
+    if(fs.existsSync(assetPath)) {
+        fs.unlinkSync(assetPath);
+        data.isSuccessfulDelete3DTile = true;
+    }
+
+    if(!data.isSuccessfulDeleteUploadedFile && !data.isSuccessfulDelete3DTile){
+        http.send(res, global.ERROR_INVALID_PARAMETER, "asset does not exist!", data);
+        return;
+    }
+
+    http.send(res, global.ERROR_SUCCESS, "", data);
+});
+
+
 
