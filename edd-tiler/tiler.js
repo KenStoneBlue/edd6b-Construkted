@@ -3,31 +3,20 @@ const global = require('./global');
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const request = require('request-promise');
-const yargs = require('yargs');
 const path = require('path');
 const logger = require('./logger');
+const http = require('./http');
 
-const argv = yargs.argv;
-
-const jsonPath = argv.jsonPath;
-
-if(!jsonPath) {
-    logger.error('jsonPath is empty!');
-    return;
-}
-
-let data = global.readJsonFile(jsonPath);
-
-assert(data.state === global.State.Unknown);
-
-fs.unlinkSync(jsonPath);
-
-async function createAsset() {
-    const accessToken = global.accessToken;
-    const name = data.name;
-    const description = data.description;
+async function createAsset(data) {
+    const userName = data.userName;
+    const fileName = data.fileName;
     const sourceType = data.sourceType;
-    const input = data.input;
+
+    const accessToken = global.accessToken;
+    const name = userName + '_' + '_' + fileName;
+    const description = userName + '_' + '_' + fileName;
+
+    const input = global.s3UploadLocation + '/' + userName + '/' + fileName;
 
     data.state = global.State.Creating;
 
@@ -48,8 +37,12 @@ async function createAsset() {
         }
     });
 
+    const assetId = response.assetMetadata.id;
+
     // Step 2 Use response.uploadLocation to upload the file to ion
-    logger.log('Asset created. Uploading ' + input);
+    logger.log('Asset ' + assetId + ' created. Uploading ' + input);
+
+    data.assetId = assetId;
 
     const uploadLocation = response.uploadLocation;
 
@@ -114,7 +107,7 @@ async function createAsset() {
 
             data.tilingStatus = 'COMPLETE';
 
-            download(assetMetadata.id);
+            download(data);
 
         } else if (status === 'DATA_ERROR') {
             logger.log('ion detected a problem with the uploaded data.');
@@ -140,10 +133,16 @@ async function createAsset() {
         }
     }
 
-    waitUntilReady();
+    waitUntilReady(data);
 }
 
-async function download(assetId) {
+async function download(data) {
+    data.state = global.State.Downloading;
+
+    const assetId = data.assetId;
+
+    logger.log('start downloading ' + 'Asset : ' + assetId);
+
     const spawn = require('child_process').spawn;
 
     const child = spawn(global.python, [global.downloader, global.downloaderThreadCount, assetId, global.accessToken]);
@@ -152,15 +151,16 @@ async function download(assetId) {
     child.stderr.pipe(process.stderr);
 
     child.on('error', function(err) {
+        logger.log('error in downloading ' + 'Asset : ' + assetId);
         process.exit(1);
     });
 
     child.on('exit', function(code) {
         if(code !== 0) {
-
+            logger.log('error in downloading ' + 'Asset : ' + assetId);
         }
         else {
-            packaging(assetId);
+            packaging(data);
         }
     });
 }
@@ -188,11 +188,18 @@ var removeDir = function(dirPath) {
     fs.rmdirSync(dirPath);
 };
 
-async function packaging(assetId) {
+async function packaging(data) {
+    data.state = global.State.Packaging;
+
+    const assetId = data.assetId;
+    const slug = data.slug;
+
+    logger.log('Start packaging ' + 'Asset : ' + assetId);
+
     const spawn = require('child_process').spawn;
 
     const downloadedTilesetFolder = './' + assetId;
-    const outputFilePath = global.s3Location + '/' + assetId + '.3dtiles';
+    const outputFilePath = global.s3AssetLocation + '/' + slug + '.3dtiles';
 
     const child = spawn(global.node, [global.tilesToolsPath, 'tilesetToDatabase', downloadedTilesetFolder, outputFilePath]);
 
@@ -200,15 +207,22 @@ async function packaging(assetId) {
     child.stderr.pipe(process.stderr);
 
     child.on('error', function(err) {
+        logger.log('error in packaging ' + 'Asset : ' + assetId);
+
         process.exit(1);
     });
 
     child.on('exit', async function(code) {
         if(code !== 0) {
-
+            logger.log('error in packaging ' + 'Asset : ' + assetId);
         }
         else {
+            logger.log('removing ' + __dirname + '/' + assetId);
+            data.state = global.State.Deleting;
+
             removeDir(__dirname + '/' + assetId);
+
+            logger.log('deleting asset : ' + assetId + ' from Ion');
 
             const response1 = await request({
                 url: 'https://api.cesium.com/v1/assets/' + assetId,
@@ -217,11 +231,37 @@ async function packaging(assetId) {
                 json: true,
             });
 
-            process.exit(0); //Or whatever you do on completion, such as calling your callback or resolving a promise with the data
+            logger.log('preparation of asset ' + assetId + ' finished');
+
+            data.state = global.State.Finished;
+
+            var url = global.WPServerIp;
+
+            url += global.WPUpdateProductRESTAPI_EndPoint;
+            url += '?';
+            url = url + 'post_id=' + data.postId + '&';
+            url = url + 'orig_asset_attachment_id=' + data.attachmentId;
+
+            const response = await request({
+                url: url,
+                json: true,
+            });
+
+            if(response.errCode === 0)
+            {
+                logger.log(data.errMsg);
+                data.state = global.State.Completed;
+            }
+            else {
+                response.error(data.errMsg);
+                data.state = global.State.ErrorInUpdatePostState;
+            }
         }
     });
 }
 
-createAsset();
+//createAsset();
 
-
+exports.startTiling = function (data) {
+    createAsset(data);
+};

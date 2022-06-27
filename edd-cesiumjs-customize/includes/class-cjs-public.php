@@ -479,7 +479,57 @@ class EDD_CJS_Public {
 		}
 		
 	}
-	
+
+    /**
+     *
+     * @param
+     * @return
+     */
+    function start_force_tiling( $post_id ) {
+        $post = get_post($post_id);
+        $slug = $post->post_name;
+
+        $edd_download_files = get_post_meta($post_id, 'edd_download_files', true);
+
+        $file_name = $edd_download_files[0]['name'];
+
+        $asset_model_type = get_post_meta($post_id, 'asset_model_type', true);
+
+        if($asset_model_type == false) {
+            wp_die('asset model type is not specified!');
+            return;
+        }
+
+        $current_user = wp_get_current_user();
+
+        $current_user_name = $current_user->display_name;
+
+        //send tiling request
+
+        $server_url = 'http://18.189.185.13:5000/request_tiling';
+
+        $url = $server_url . '/?' . 'postId=' . $post_id . '&slug=' . $slug . '&userName=' . $current_user_name . '&fileName=' . $file_name . '&assetModelType=' . $asset_model_type;
+
+        $ret = wp_remote_get( $url );
+
+        if( is_wp_error( $ret ) ) {
+            $error_string = $ret->get_error_message();
+
+            wp_die($error_string);
+
+            return;
+        }
+
+        $body = wp_remote_retrieve_body( $ret );
+
+        $data = json_decode( $body );
+
+        if($data->errCode != 0) {
+            wp_die('tiling server sent error!');
+            return;
+        }
+    }
+
 	/**
 	 * Adding Hooks
 	 *
@@ -511,6 +561,6 @@ class EDD_CJS_Public {
 
 		add_filter( 'edd_add_to_cart_item', array( $this, 'dp_check_item_to_add' ) );
 
-
+        add_action('start_force_tiling', array( $this, 'start_force_tiling'));
 	}
 }

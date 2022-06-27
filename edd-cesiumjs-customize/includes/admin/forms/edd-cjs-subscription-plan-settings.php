@@ -65,7 +65,8 @@ $model = $edd_cjs_model;
 											echo "<table>";
 											echo "<tr>
 											<th style='padding:10px 10px 10px 0;'>Subscription Plan</th>
-											<th style='padding:10px 10px 10px 0;'>Allowed Space (MB)</th>
+											<th style='padding:10px 10px 10px 0;'>Max File upload (MB)</th>
+											<th style='padding:10px 10px 10px 0;'>Storage Disk Quota (MB)</th>
 											<th style='padding:10px;'>Private/Public Access </th>
 											<th style='padding:10px;'>Sellable Product Access</th>
 											</tr>";
@@ -77,6 +78,7 @@ $model = $edd_cjs_model;
 												
 												echo "<tr><td><b>".$level_obj->name."</b></td>";
 												echo "<td><input type='text' name='eddcjs_rcp_level_size[".$level_obj->id."]' value='".$level_size."' /></td>";
+												echo "<td><input type='text' name='eddcjs_rcp_quota_size[".$level_obj->id."]' value=' ' /></td>";
 												echo "<td style='text-align:center;'><input type='checkbox' name='eddcjs_rcp_level_size[".'allowed_access_'.$level_obj->id."]' value='".$level_obj->id."' '".checked( $allowed_access, $level_obj->id, false )."'></td>";
 												echo "<td style='text-align:center;'><input type='checkbox' name='eddcjs_rcp_level_size[".'sellable_access_'.$level_obj->id."]' value='".$level_obj->id."' '".checked( $sellable_access, $level_obj->id, false )."'></td></tr>";											
 											}

@@ -42,6 +42,12 @@ Version: 1.0.1
     width: 65px;
 }
 
+@media screen and (min-width: 975px){
+    .post-content .edd_downloads_list .edd_download{
+	    margin-bottom: 60px;	
+	    height: 250px;
+    }
+}
 
 
 /****************************************************************/
